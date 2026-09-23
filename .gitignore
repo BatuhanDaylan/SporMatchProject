@@ -30,8 +30,17 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# IDE
+.idea/
+
 # local env files
+.env
 .env*.local
+
+# gizli servis hesabı anahtarı (push GÖNDERİMİ, server-side) — ASLA commit etme
+fcm-service-account.json
+# not: google-services.json APK'ya gömülür (gerçek sır değil) ve EAS Build'in görmesi
+# gerektiği için bilerek ignore ETMİYORUZ.
 
 # typescript
 *.tsbuildinfo

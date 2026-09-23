@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "246064020988",
+    "project_id": "spormatch-c8f7d",
+    "storage_bucket": "spormatch-c8f7d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246064020988:android:bf7184c399f0611a778679",
+        "android_client_info": {
+          "package_name": "com.batuhandaylan.spormatch"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDreXBKDaASTXlnHc60KDjMP8XTZL88B5U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
