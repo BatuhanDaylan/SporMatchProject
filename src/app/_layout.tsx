@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
@@ -83,6 +84,8 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider value={navTheme(scheme)}>
+            {/* Durum çubuğu simgeleri: koyu temada açık, açık temada koyu renk. */}
+            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
             <RootNavigator />
             <AlertHost />
           </ThemeProvider>
