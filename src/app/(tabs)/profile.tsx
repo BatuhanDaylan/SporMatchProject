@@ -113,18 +113,28 @@ export default function ProfileScreen() {
             <View style={{ marginTop: Spacing.two }}>
               <Button title="Profili Düzenle" size="lg" onPress={() => router.push('/profile-edit')} />
             </View>
-            <Pressable
-              onPress={() => router.push('/settings')}
-              style={({ pressed }) => [
-                styles.secondaryBtn,
-                { backgroundColor: c.backgroundElement, opacity: pressed ? 0.85 : 1 },
-              ]}>
-              <Ionicons name="settings-outline" size={18} color={c.text} />
-              <Text style={{ color: c.text, fontWeight: '600', fontSize: 15 }}>Ayarlar</Text>
-            </Pressable>
-            <Pressable onPress={confirmSignOut} style={styles.signOut} hitSlop={8}>
-              <Text style={{ color: c.danger, fontWeight: '600' }}>Çıkış Yap</Text>
-            </Pressable>
+            <View style={styles.footerRow}>
+              <Pressable
+                onPress={() => router.push('/settings')}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.secondaryBtn,
+                  { backgroundColor: c.backgroundElement, opacity: pressed ? 0.85 : 1 },
+                ]}>
+                <Ionicons name="settings-outline" size={18} color={c.text} />
+                <Text style={{ color: c.text, fontWeight: '600', fontSize: 15 }}>Ayarlar</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmSignOut}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.secondaryBtn,
+                  { backgroundColor: c.backgroundElement, opacity: pressed ? 0.85 : 1 },
+                ]}>
+                <Ionicons name="log-out-outline" size={18} color={c.danger} />
+                <Text style={{ color: c.danger, fontWeight: '600', fontSize: 15 }}>Çıkış Yap</Text>
+              </Pressable>
+            </View>
           </>
         }
       />
@@ -156,7 +166,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   unreadText: { fontSize: 10, fontWeight: '800' },
+  footerRow: { flexDirection: 'row', gap: Spacing.two },
   secondaryBtn: {
+    flex: 1,
     flexDirection: 'row',
     gap: Spacing.two,
     height: 48,
@@ -164,5 +176,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  signOut: { alignItems: 'center', paddingVertical: Spacing.two },
 });

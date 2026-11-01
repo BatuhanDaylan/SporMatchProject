@@ -59,39 +59,50 @@ export function ProfileView({
   const c = useColors();
   const earnedCount = badges.filter((b) => b.unlocked).length;
 
-  const metaBits = [
+  const pills = [
     levelLabel ? `Deneyim: ${levelLabel}` : null,
     location ? `📍 ${location}` : null,
+    stats && stats.streak > 0 ? `🔥 ${stats.streak} gün seri` : null,
   ].filter(Boolean) as string[];
 
   return (
     <>
       {/* Başlık kartı */}
       <View style={[styles.card, styles.headerCard, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
-        <Avatar name={name} url={avatarUrl ?? null} size={96} />
-        <Text style={[styles.name, { color: c.text }]}>{name}</Text>
-        {username ? <Text style={{ color: c.textSecondary }}>@{username}</Text> : null}
-        {metaBits.length ? (
-          <Text style={[styles.meta, { color: c.textSecondary }]}>{metaBits.join('  ·  ')}</Text>
-        ) : null}
-        {bio ? <Text style={[styles.bio, { color: c.text }]}>{bio}</Text> : null}
-        {stats && stats.streak > 0 ? (
-          <View style={[styles.streakPill, { backgroundColor: c.background }]}>
-            <Text style={{ fontSize: 15 }}>🔥</Text>
-            <Text style={{ color: c.text, fontWeight: '700', fontSize: 13 }}>{stats.streak} gün seri</Text>
+        <View style={styles.identity}>
+          <Avatar name={name} url={avatarUrl ?? null} size={80} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={[styles.name, { color: c.text }]} numberOfLines={2}>
+              {name}
+            </Text>
+            {username ? <Text style={{ color: c.textSecondary }}>@{username}</Text> : null}
+          </View>
+        </View>
+
+        {pills.length ? (
+          <View style={styles.pills}>
+            {pills.map((p) => (
+              <View key={p} style={[styles.pill, { backgroundColor: c.background }]}>
+                <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>{p}</Text>
+              </View>
+            ))}
           </View>
         ) : null}
 
+        {bio ? <Text style={[styles.bio, { color: c.text }]}>{bio}</Text> : null}
+
         {followInfo ? (
           <View style={styles.followRow}>
-            <Pressable onPress={onOpenFollowers} style={styles.followStat} hitSlop={4}>
-              <Text style={[styles.followNum, { color: c.text }]}>{followInfo.followers}</Text>
-              <Text style={{ color: c.textSecondary, fontSize: 12 }}>Takipçi</Text>
+            <Pressable onPress={onOpenFollowers} hitSlop={6} accessibilityRole="button">
+              <Text style={{ color: c.textSecondary, fontSize: 14 }}>
+                <Text style={[styles.followNum, { color: c.text }]}>{followInfo.followers}</Text> Takipçi
+              </Text>
             </Pressable>
-            <View style={[styles.followDivider, { backgroundColor: c.border }]} />
-            <Pressable onPress={onOpenFollowing} style={styles.followStat} hitSlop={4}>
-              <Text style={[styles.followNum, { color: c.text }]}>{followInfo.following}</Text>
-              <Text style={{ color: c.textSecondary, fontSize: 12 }}>Takip</Text>
+            <Text style={{ color: c.border }}>•</Text>
+            <Pressable onPress={onOpenFollowing} hitSlop={6} accessibilityRole="button">
+              <Text style={{ color: c.textSecondary, fontSize: 14 }}>
+                <Text style={[styles.followNum, { color: c.text }]}>{followInfo.following}</Text> Takip
+              </Text>
             </Pressable>
           </View>
         ) : null}
@@ -119,6 +130,26 @@ export function ProfileView({
           ))
         )}
       </View>
+
+      {goals?.length ? (
+        <Section title="Hedefler" c={c}>
+          <TagRow items={goals} c={c} />
+        </Section>
+      ) : null}
+
+      {availability?.length ? (
+        <Section title="Müsaitlik" c={c}>
+          <TagRow items={availability.map((a) => `🕑 ${a}`)} c={c} />
+        </Section>
+      ) : null}
+
+      <Section title="Sporlar" c={c}>
+        {sportNames.length ? (
+          <TagRow items={sportNames} c={c} />
+        ) : (
+          <Text style={{ color: c.textSecondary }}>Henüz spor seçilmedi.</Text>
+        )}
+      </Section>
 
       {/* Antrenman ısı-haritası */}
       {userId ? (
@@ -151,26 +182,6 @@ export function ProfileView({
           </ScrollView>
         </Section>
       ) : null}
-
-      {goals?.length ? (
-        <Section title="Hedefler" c={c}>
-          <TagRow items={goals} c={c} />
-        </Section>
-      ) : null}
-
-      {availability?.length ? (
-        <Section title="Müsaitlik" c={c}>
-          <TagRow items={availability.map((a) => `🕑 ${a}`)} c={c} />
-        </Section>
-      ) : null}
-
-      <Section title="Sporlar" c={c}>
-        {sportNames.length ? (
-          <TagRow items={sportNames} c={c} />
-        ) : (
-          <Text style={{ color: c.textSecondary }}>Henüz spor seçilmedi.</Text>
-        )}
-      </Section>
 
       {footer}
     </>
@@ -227,24 +238,15 @@ function TagRow({ items, c }: { items: string[]; c: ReturnType<typeof useColors>
 
 const styles = StyleSheet.create({
   card: { borderRadius: 20, borderWidth: 1, padding: Spacing.three, ...Elevation.card },
-  headerCard: { alignItems: 'center', gap: 4 },
-  name: { fontSize: 22, fontWeight: '800', marginTop: Spacing.two },
-  meta: { fontSize: 14, marginTop: 2 },
-  bio: { fontSize: 15, textAlign: 'center', marginTop: Spacing.two, lineHeight: 21 },
-  streakPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    marginTop: Spacing.three,
-  },
-  followRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.three },
-  followStat: { alignItems: 'center', paddingHorizontal: Spacing.two },
-  followNum: { fontSize: 18, fontWeight: '800' },
-  followDivider: { width: 1, height: 24 },
-  headerAction: { alignSelf: 'stretch', marginTop: Spacing.three },
+  headerCard: { gap: Spacing.three },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  name: { fontSize: 22, fontWeight: '800' },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  pill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  bio: { fontSize: 15, lineHeight: 21 },
+  followRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  followNum: { fontSize: 16, fontWeight: '800' },
+  headerAction: { alignSelf: 'stretch' },
   statsCard: { flexDirection: 'row', paddingVertical: Spacing.three },
   statCol: { flex: 1, alignItems: 'center', gap: 3 },
   statValue: { fontSize: 22, fontWeight: '800' },
