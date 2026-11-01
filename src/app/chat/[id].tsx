@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -9,8 +10,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AsyncState } from '@/components/ui/async-state';
 import { useColors } from '@/hooks/useColors';
-import { useMessages, type Message } from '@/hooks/useChat';
+import { useMessages, type Conversation, type Message } from '@/hooks/useChat';
+import { shortDate, startOfDay } from '@/lib/datetime';
 import { Spacing } from '@/constants/theme';
+
+/** Gün ayracı etiketi: Bugün / Dün / 12 Kas. */
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const diff = Math.round((startOfDay(new Date()).getTime() - startOfDay(d).getTime()) / 86400000);
+  if (diff === 0) return 'Bugün';
+  if (diff === 1) return 'Dün';
+  return shortDate(d);
+}
+
+const sameDay = (a: string, b: string) => startOfDay(new Date(a)).getTime() === startOfDay(new Date(b)).getTime();
 
 export default function ChatThreadScreen() {
   const c = useColors();
@@ -19,12 +32,29 @@ export default function ChatThreadScreen() {
   const { data: messages, isLoading, send, currentUserId } = useMessages(id);
   const [text, setText] = useState('');
 
+  // Başlıkta karşı tarafın adı: Sohbet sekmesinin önbelleğinden okunur (yeni sorgu/realtime kanalı açmaz;
+  // önbellekte yoksa — ör. bildirimden açılış — 'Sohbet' kalır).
+  const qc = useQueryClient();
+  const convs = qc.getQueryData<Conversation[]>(['conversations']);
+  const partner = convs?.find((x) => x.conversation_id === id);
+  const title = partner?.partner_name || partner?.partner_username || 'Sohbet';
+
   // Ters liste (en yeni altta) — inverted FlatList için tersle
   const reversed = useMemo(() => (messages ? [...messages].reverse() : []), [messages]);
 
+  // Liste ters (en yeni önce): bir mesajın "bir öncesi" index+1'dir. Gün değişiyorsa ayraç göster.
   const renderItem = useCallback(
-    ({ item }: { item: Message }) => <Bubble msg={item} mine={item.sender_id === currentUserId} />,
-    [currentUserId],
+    ({ item, index }: { item: Message; index: number }) => {
+      const older = reversed[index + 1];
+      const showDay = !older || !sameDay(older.created_at, item.created_at);
+      return (
+        <View style={{ gap: 8 }}>
+          {showDay ? <Text style={[styles.day, { color: c.textSecondary }]}>{dayLabel(item.created_at)}</Text> : null}
+          <Bubble msg={item} mine={item.sender_id === currentUserId} />
+        </View>
+      );
+    },
+    [currentUserId, reversed, c.textSecondary],
   );
 
   async function onSend() {
@@ -44,7 +74,7 @@ export default function ChatThreadScreen() {
       style={{ flex: 1, backgroundColor: c.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}>
-      <Stack.Screen options={{ headerShown: true, title: 'Sohbet' }} />
+      <Stack.Screen options={{ headerShown: true, title }} />
       <AsyncState
         isLoading={isLoading}
         isEmpty={reversed.length === 0}
@@ -74,10 +104,10 @@ export default function ChatThreadScreen() {
         <Pressable
           onPress={onSend}
           disabled={!text.trim()}
-          style={styles.send}
+          style={[styles.send, { backgroundColor: text.trim() ? c.primary : c.backgroundElement }]}
           accessibilityRole="button"
           accessibilityLabel="Mesajı gönder">
-          <Ionicons name="send" size={22} color={text.trim() ? c.primary : c.textSecondary} />
+          <Ionicons name="send" size={20} color={text.trim() ? c.onPrimary : c.textSecondary} />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -115,5 +145,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   input: { flex: 1, minHeight: 44, maxHeight: 120, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15 },
-  send: { padding: 10 },
+  send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  day: { alignSelf: 'center', fontSize: 12, fontWeight: '600', marginVertical: 6 },
 });

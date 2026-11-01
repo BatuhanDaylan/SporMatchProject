@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 
 import { displayName } from '@/lib/displayName';
@@ -32,7 +32,8 @@ export default function MatchScreen() {
 
   if (isLoading || !p) {
     return (
-      <Screen center>
+      <Screen center hasHeader>
+        <Stack.Screen options={{ headerShown: true, title: 'Eşleşme' }} />
         <Loading />
       </Screen>
     );
@@ -42,7 +43,8 @@ export default function MatchScreen() {
 
   if (p.status === 'declined') {
     return (
-      <Screen center>
+      <Screen center hasHeader>
+        <Stack.Screen options={{ headerShown: true, title: 'Eşleşme' }} />
         <View style={styles.centerBox}>
           <Ionicons name="close-circle-outline" size={56} color={c.textSecondary} />
           <Text style={[styles.h, { color: c.text }]}>Eşleşme reddedildi</Text>
@@ -60,7 +62,8 @@ export default function MatchScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
+      <Stack.Screen options={{ headerShown: true, title: 'Eşleşme' }} />
       {confirmed ? (
         <View style={[styles.banner, { backgroundColor: c.success }]}>
           <Ionicons name="checkmark-circle" size={20} color={c.onSuccess} />
@@ -71,21 +74,31 @@ export default function MatchScreen() {
       )}
 
       {/* Partner kartı */}
-      <View style={[styles.card, { backgroundColor: c.backgroundElement }]}>
-        <Avatar name={name} url={p.avatar_url} size={72} />
+      <View style={[styles.card, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+        <Avatar name={name} url={p.avatar_url} size={88} />
         <Text style={[styles.name, { color: c.text }]}>{name}</Text>
-        {p.level ? <Text style={{ color: c.primary, fontWeight: '600' }}>{LEVEL[p.level] ?? p.level}</Text> : null}
-        <View style={styles.distRow}>
-          <Ionicons name="navigate-outline" size={16} color={c.textSecondary} />
-          <Text style={{ color: c.textSecondary }}>{fmtDistance(p.distance_m)} uzaklıkta</Text>
+        <View style={styles.pills}>
+          {p.level ? (
+            <View style={[styles.pill, { backgroundColor: c.background }]}>
+              <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>Deneyim: {LEVEL[p.level] ?? p.level}</Text>
+            </View>
+          ) : null}
+          {p.distance_m != null ? (
+            <View style={[styles.pill, { backgroundColor: c.background }]}>
+              <Ionicons name="navigate-outline" size={13} color={c.primary} />
+              <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>{fmtDistance(p.distance_m)} uzaklıkta</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
       {!confirmed ? (
         p.i_confirmed ? (
           <View style={styles.centerBox}>
+            <Ionicons name="hourglass-outline" size={32} color={c.primary} />
+            <Text style={{ color: c.text, fontWeight: '700', fontSize: 16 }}>Onayın alındı</Text>
             <Text style={{ color: c.textSecondary, textAlign: 'center' }}>
-              Onayladın. Karşı tarafın onayı bekleniyor…
+              Karşı tarafın onayı bekleniyor. İkiniz de onaylayınca konumlar paylaşılacak.
             </Text>
             <Button title="Vazgeç" variant="secondary" onPress={() => decline.mutate(id, { onSuccess: () => router.replace('/(tabs)/match') })} />
           </View>
@@ -135,9 +148,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: Spacing.three, borderRadius: 12 },
   bannerText: { fontWeight: '600', flex: 1 },
-  card: { alignItems: 'center', gap: 4, padding: Spacing.four, borderRadius: 16, marginVertical: Spacing.three },
+  card: { alignItems: 'center', gap: 6, padding: Spacing.four, borderRadius: 20, borderWidth: 1, marginVertical: Spacing.three },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 4 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
   name: { fontSize: 22, fontWeight: '800', marginTop: Spacing.two },
-  distRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   centerBox: { alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.four },
   h: { fontSize: 20, fontWeight: '700' },
   locBox: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, borderWidth: 1, borderRadius: 12, padding: Spacing.three },
