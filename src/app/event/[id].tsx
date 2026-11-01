@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MapView } from '@/components/map-view';
 import { MetaRow } from '@/components/ui/meta-row';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
 import { useColors } from '@/hooks/useColors';
 import { useEventDetail, useEventActions } from '@/hooks/useEvents';
@@ -53,30 +54,57 @@ export default function EventDetailScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Etkinlik' }} />
       <AsyncState isLoading={isLoading} isError={isError || !ev} onRetry={refetch}>
         {ev ? (
         <View style={{ gap: Spacing.two }}>
-          <Text style={[styles.title, { color: c.text }]}>{ev.title}</Text>
           {ev.status === 'cancelled' ? (
             <View style={[styles.cancelBanner, { backgroundColor: c.danger }]}>
               <Text style={{ color: c.onDanger, fontWeight: '700' }}>Bu etkinlik iptal edildi</Text>
             </View>
           ) : null}
 
-          {/* Meta satırları */}
-          <Card style={styles.metaCard}>
+          {/* Hero: spor, başlık, zaman, yer */}
+          <Card style={styles.hero}>
+            <View style={styles.heroTop}>
+              <View style={[styles.heroIcon, { backgroundColor: `${c.primary}22` }]}>
+                <Text style={{ fontSize: 30 }}>{ev.sport?.icon ?? '📅'}</Text>
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={[styles.title, { color: c.text }]} numberOfLines={3}>
+                  {ev.title}
+                </Text>
+                {ev.sport?.name ? (
+                  <Text style={{ color: c.textSecondary, fontSize: 13 }}>{ev.sport.name}</Text>
+                ) : null}
+              </View>
+            </View>
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
             <MetaRow icon="time-outline" text={eventWhen(ev.starts_at)} c={c} />
             {ev.place_name ? <MetaRow icon="location-outline" text={ev.place_name} c={c} /> : null}
-            {ev.sport?.name ? (
-              <MetaRow icon="fitness-outline" text={`${ev.sport.icon ?? ''} ${ev.sport.name}`.trim()} c={c} />
+            {ev.district || ev.province ? (
+              <MetaRow icon="map-outline" text={[ev.district, ev.province].filter(Boolean).join(', ')} c={c} />
             ) : null}
-            <MetaRow
-              icon="people-outline"
-              text={`${ev.participant_count} katılımcı${ev.capacity ? ` / ${ev.capacity}` : ''}`}
-              c={c}
-            />
+          </Card>
+
+          {/* Katılım doluluğu */}
+          <Card style={styles.capCard}>
+            <View style={styles.rowBetween}>
+              <Text style={{ color: c.text, fontWeight: '700' }}>Katılım</Text>
+              <Text style={{ color: c.textSecondary, fontWeight: '600' }}>
+                {ev.capacity ? `${ev.participant_count}/${ev.capacity}` : `${ev.participant_count} kişi`}
+              </Text>
+            </View>
+            {ev.capacity ? (
+              <ProgressBar
+                value={ev.participant_count / ev.capacity}
+                done={ev.participant_count >= ev.capacity}
+                height={8}
+              />
+            ) : (
+              <Text style={{ color: c.textSecondary, fontSize: 12 }}>Kontenjan sınırı yok.</Text>
+            )}
           </Card>
 
           {/* Ev sahibi */}
@@ -103,7 +131,12 @@ export default function EventDetailScreen() {
           <MapView lat={ev.lat} lng={ev.lng} label={ev.place_name || ev.title} />
 
           {/* Katılımcılar */}
-          <Text style={[styles.section, { color: c.text }]}>Katılımcılar ({ev.participant_count})</Text>
+          <View style={styles.rowBetween}>
+            <Text style={[styles.section, { color: c.text }]}>Katılımcılar</Text>
+            <View style={[styles.countBadge, { backgroundColor: c.primary }]}>
+              <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '800' }}>{ev.participant_count}</Text>
+            </View>
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -145,11 +178,17 @@ export default function EventDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '800' },
+  title: { fontSize: 22, fontWeight: '800' },
   cancelBanner: { padding: Spacing.two, borderRadius: 10, alignItems: 'center' },
-  metaCard: { padding: Spacing.two, borderRadius: 14, borderWidth: 1, gap: 10 },
+  hero: { padding: Spacing.three, borderRadius: 18, gap: 10 },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  heroIcon: { width: 60, height: 60, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  divider: { height: StyleSheet.hairlineWidth },
+  capCard: { padding: Spacing.three, borderRadius: 16, gap: 8 },
+  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  countBadge: { minWidth: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
   hostRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, padding: Spacing.two, borderRadius: 14, borderWidth: 1 },
-  section: { fontSize: 16, fontWeight: '700', marginTop: Spacing.two },
+  section: { fontSize: 17, fontWeight: '700' },
   pav: { alignItems: 'center', gap: 4, width: 60 },
   cancelLink: { alignItems: 'center', paddingVertical: Spacing.two, marginTop: 4 },
 });
