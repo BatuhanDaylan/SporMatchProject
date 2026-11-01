@@ -167,56 +167,48 @@ export default function ProfileEditScreen() {
         />
       </View>
 
-      <View style={{ gap: Spacing.two }}>
-        <Text style={[styles.sectionTitle, { color: c.text }]}>Seviye</Text>
-        <WheelField
-          title="Seviye seç"
-          icon="trending-up-outline"
-          items={[null, ...LEVELS.map((l) => l.id)]}
-          value={level}
-          renderLabel={(id) => (id === null ? 'Seçilmedi' : LEVELS.find((l) => l.id === id)?.label ?? 'Seçilmedi')}
-          onChange={setLevel}
-        />
-      </View>
+      <WheelField
+        label="Seviye"
+        title="Seviye seç"
+        icon="trending-up-outline"
+        items={[null, ...LEVELS.map((l) => l.id)]}
+        value={level}
+        renderLabel={(id) => (id === null ? 'Seçilmedi' : LEVELS.find((l) => l.id === id)?.label ?? 'Seçilmedi')}
+        onChange={setLevel}
+      />
 
-      <View style={{ gap: Spacing.two }}>
-        <Text style={[styles.sectionTitle, { color: c.text }]}>Hedefler</Text>
-        <MultiSelectField
-          title="Hedefleri seç"
-          icon="flag-outline"
-          items={GOAL_OPTIONS}
-          values={goals}
-          getKey={(g) => g}
-          renderLabel={(g) => g}
-          onChange={setGoals}
-        />
-      </View>
+      <MultiSelectField
+        label="Hedefler"
+        title="Hedefleri seç"
+        icon="flag-outline"
+        items={GOAL_OPTIONS}
+        values={goals}
+        getKey={(g) => g}
+        renderLabel={(g) => g}
+        onChange={setGoals}
+      />
 
-      <View style={{ gap: Spacing.two }}>
-        <Text style={[styles.sectionTitle, { color: c.text }]}>Müsaitlik</Text>
-        <MultiSelectField
-          title="Müsaitliği seç"
-          icon="time-outline"
-          items={AVAILABILITY_OPTIONS}
-          values={availability}
-          getKey={(a) => a}
-          renderLabel={(a) => a}
-          onChange={setAvailability}
-        />
-      </View>
+      <MultiSelectField
+        label="Müsaitlik"
+        title="Müsaitliği seç"
+        icon="time-outline"
+        items={AVAILABILITY_OPTIONS}
+        values={availability}
+        getKey={(a) => a}
+        renderLabel={(a) => a}
+        onChange={setAvailability}
+      />
 
-      <View style={{ gap: Spacing.two }}>
-        <Text style={[styles.sectionTitle, { color: c.text }]}>Sporlar</Text>
-        <MultiSelectField
-          title="Sporları seç"
-          icon="basketball-outline"
-          items={sports ?? []}
-          values={selected}
-          getKey={(s) => s.id}
-          renderLabel={(s) => `${s.icon ?? ''} ${s.name}`.trim()}
-          onChange={setSelected}
-        />
-      </View>
+      <MultiSelectField
+        label="Sporlar"
+        title="Sporları seç"
+        icon="basketball-outline"
+        items={sports ?? []}
+        values={selected}
+        getKey={(s) => s.id}
+        renderLabel={(s) => `${s.icon ?? ''} ${s.name}`.trim()}
+        onChange={setSelected}
+      />
 
       {error ? <Text style={{ color: c.danger }}>{error}</Text> : null}
 
@@ -242,5 +234,4 @@ const styles = StyleSheet.create({
     borderWidth: 3,
   },
   locationRow: { flexDirection: 'row', gap: Spacing.two },
-  sectionTitle: { fontSize: 17, fontWeight: '700' },
 });
