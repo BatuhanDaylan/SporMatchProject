@@ -18,6 +18,7 @@ import { Screen } from '@/components/ui/screen';
 import { useColors } from '@/hooks/useColors';
 import { useProgram, useProgramMutations } from '@/hooks/usePrograms';
 import { useProgramSocial } from '@/hooks/useProgramSocial';
+import { useSports } from '@/hooks/useSports';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useAuth } from '@/lib/auth';
@@ -37,9 +38,13 @@ export default function ProgramDetailScreen() {
   const { remove, fork } = useProgramMutations();
   const { data: owner } = usePublicProfile(program?.owner_id);
   const social = useProgramSocial(id);
+  const { data: sports } = useSports();
 
   const isOwner = !!program && program.owner_id === user?.id;
   const ownerName = displayName(owner);
+  const sportIcon = sports?.find((x) => x.id === program?.sport_id)?.icon ?? null;
+  const days = program?.template?.days ?? [];
+  const exCount = days.reduce((n, d) => n + (d.exercises?.length ?? 0), 0);
 
   // Grafiklenebilir metrikler: (egzersiz, sayısal alan) çiftleri
   const metrics = useMemo(() => {
@@ -107,36 +112,71 @@ export default function ProgramDetailScreen() {
 
   if (isLoading) {
     return (
-      <Screen center>
+      <Screen center hasHeader>
+        <Stack.Screen options={{ headerShown: true, title: 'Program' }} />
         <Loading />
       </Screen>
     );
   }
   if (!program) {
     return (
-      <Screen center>
+      <Screen center hasHeader>
+        <Stack.Screen options={{ headerShown: true, title: 'Program' }} />
         <Text style={{ color: c.textSecondary }}>Program bulunamadı.</Text>
       </Screen>
     );
   }
 
   return (
-    <Screen scroll>
-      <Stack.Screen options={{ headerShown: true, title: program.title }} />
+    <Screen scroll hasHeader>
+      <Stack.Screen options={{ headerShown: true, title: 'Program' }} />
 
-      <Text style={[styles.title, { color: c.text }]}>{program.title}</Text>
-      {program.description ? (
-        <Text style={{ color: c.textSecondary }}>{program.description}</Text>
-      ) : null}
-
-      {/* Oluşturan */}
-      <Card onPress={() => router.push(`/user/${program.owner_id}`)} style={styles.creator}>
-        <Avatar name={ownerName} url={owner?.avatar_url} size={40} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: c.textSecondary, fontSize: 12 }}>Oluşturan</Text>
-          <Text style={{ color: c.text, fontWeight: '700' }}>{ownerName}</Text>
+      {/* Hero: spor, başlık, oluşturan, açıklama, özet etiketleri */}
+      <Card style={styles.hero}>
+        <View style={styles.heroTop}>
+          <View style={[styles.heroIcon, { backgroundColor: `${c.primary}22` }]}>
+            <Text style={{ fontSize: 30 }}>{sportIcon ?? '📋'}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[styles.title, { color: c.text }]} numberOfLines={3}>
+              {program.title}
+            </Text>
+            <Pressable
+              onPress={() => router.push(`/user/${program.owner_id}`)}
+              style={styles.ownerRow}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel={`Oluşturan ${ownerName}, profili aç`}>
+              <Avatar name={ownerName} url={owner?.avatar_url} size={20} />
+              <Text style={{ color: c.textSecondary, fontSize: 13, flex: 1 }} numberOfLines={1}>
+                {ownerName}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={c.textSecondary} />
+        {program.description ? (
+          <Text style={{ color: c.text, fontSize: 15, lineHeight: 21 }}>{program.description}</Text>
+        ) : null}
+        <View style={styles.pills}>
+          <View style={[styles.pill, { backgroundColor: c.background }]}>
+            <Ionicons name="calendar-outline" size={13} color={c.primary} />
+            <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>{days.length} gün</Text>
+          </View>
+          <View style={[styles.pill, { backgroundColor: c.background }]}>
+            <Ionicons name="barbell-outline" size={13} color={c.primary} />
+            <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>{exCount} egzersiz</Text>
+          </View>
+          <View style={[styles.pill, { backgroundColor: c.background }]}>
+            <Ionicons
+              name={program.visibility === 'public' ? 'globe-outline' : 'lock-closed-outline'}
+              size={13}
+              color={c.primary}
+            />
+            <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>
+              {program.visibility === 'public' ? 'Herkese açık' : 'Gizli'}
+            </Text>
+          </View>
+        </View>
       </Card>
 
       {/* Beğeni & kaydetme */}
@@ -144,6 +184,8 @@ export default function ProgramDetailScreen() {
         <Pressable
           onPress={() => social.toggleLike.mutate(social.data?.liked ?? false)}
           disabled={social.toggleLike.isPending}
+          accessibilityRole="button"
+          accessibilityLabel={social.data?.liked ? 'Beğeniyi kaldır' : 'Beğen'}
           style={[styles.socialBtn, { borderColor: c.border }]}>
           <Ionicons
             name={social.data?.liked ? 'heart' : 'heart-outline'}
@@ -155,6 +197,8 @@ export default function ProgramDetailScreen() {
         <Pressable
           onPress={() => social.toggleSave.mutate(social.data?.saved ?? false)}
           disabled={social.toggleSave.isPending}
+          accessibilityRole="button"
+          accessibilityLabel={social.data?.saved ? 'Kaydedilenlerden kaldır' : 'Kaydet'}
           style={[
             styles.socialBtn,
             {
@@ -186,8 +230,14 @@ export default function ProgramDetailScreen() {
         <View style={styles.actions}>
           <Button title="Antrenman Kaydet" onPress={() => router.push(`/program/log?programId=${id}`)} />
           <View style={styles.rowBtns}>
-            <Button title="Düzenle" variant="secondary" onPress={() => router.push(`/program/edit?id=${id}`)} />
-            <Pressable onPress={confirmDelete} style={[styles.deleteBtn, { borderColor: c.danger }]}>
+            <View style={{ flex: 1 }}>
+              <Button title="Düzenle" variant="secondary" onPress={() => router.push(`/program/edit?id=${id}`)} />
+            </View>
+            <Pressable
+              onPress={confirmDelete}
+              style={[styles.deleteBtn, { borderColor: c.danger }]}
+              accessibilityRole="button"
+              accessibilityLabel="Programı sil">
               <Ionicons name="trash-outline" size={20} color={c.danger} />
             </Pressable>
           </View>
@@ -243,12 +293,15 @@ export default function ProgramDetailScreen() {
 
       {/* Program yapısı */}
       <Text style={[styles.sectionTitle, { color: c.text, marginTop: Spacing.three }]}>İçerik</Text>
-      {program.template.days.length === 0 ? (
+      {days.length === 0 ? (
         <Text style={{ color: c.textSecondary }}>Bu programda henüz gün yok.</Text>
       ) : (
-        program.template.days.map((d) => (
+        days.map((d) => (
           <Card key={d.id} style={styles.dayCard}>
-            <Text style={[styles.dayName, { color: c.text }]}>{d.name}</Text>
+            <View style={styles.dayHead}>
+              <Text style={[styles.dayName, { color: c.text }]}>{d.name}</Text>
+              <Text style={{ color: c.textSecondary, fontSize: 12 }}>{d.exercises?.length ?? 0} egzersiz</Text>
+            </View>
             {d.exercises.length === 0 ? (
               <Text style={{ color: c.textSecondary, fontSize: 13 }}>Egzersiz yok.</Text>
             ) : (
@@ -288,17 +341,15 @@ export default function ProgramDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '800' },
-  creator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    padding: Spacing.two,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginTop: Spacing.one,
-  },
-  socialRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.two },
+  title: { fontSize: 22, fontWeight: '800' },
+  hero: { padding: Spacing.three, borderRadius: 18, gap: Spacing.two },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  heroIcon: { width: 60, height: 60, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  ownerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  dayHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  socialRow: { flexDirection: 'row', gap: Spacing.two },
   socialBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,7 +359,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  actions: { gap: Spacing.two, marginTop: Spacing.two },
+  actions: { gap: Spacing.two },
   rowBtns: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center' },
   deleteBtn: {
     width: 50,
