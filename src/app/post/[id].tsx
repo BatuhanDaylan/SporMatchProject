@@ -68,7 +68,7 @@ export default function PostDetailScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Gönderi' }} />
       <AsyncState isLoading={isLoading} isError={isError || !post} onRetry={refetch}>
         {post ? (
@@ -94,22 +94,37 @@ export default function PostDetailScreen() {
                 </View>
               </Pressable>
 
-              {post.body ? <Text style={{ color: c.text, fontSize: 15, lineHeight: 21 }}>{post.body}</Text> : null}
+              {post.body ? (
+                <Text
+                  style={{
+                    color: c.text,
+                    fontSize: post.image_url ? 15 : 18,
+                    lineHeight: post.image_url ? 21 : 26,
+                  }}>
+                  {post.body}
+                </Text>
+              ) : null}
               {post.image_url ? (
                 <Image source={{ uri: post.image_url }} style={styles.image} contentFit="cover" />
               ) : null}
 
-              <Pressable
-                onPress={() => toggleLike.mutate({ postId: post.id, liked: post.liked })}
-                style={styles.likeBtn}
-                hitSlop={6}
-                accessibilityRole="button"
-                accessibilityLabel={post.liked ? 'Beğeniyi geri al' : 'Beğen'}>
-                <Ionicons name={post.liked ? 'heart' : 'heart-outline'} size={20} color={post.liked ? c.primary : c.textSecondary} />
-                <Text style={{ color: post.liked ? c.primary : c.textSecondary, fontWeight: '600', fontSize: 13 }}>
-                  {post.like_count > 0 ? post.like_count : 'Beğen'}
-                </Text>
-              </Pressable>
+              <View style={styles.actionRow}>
+                <Pressable
+                  onPress={() => toggleLike.mutate({ postId: post.id, liked: post.liked })}
+                  style={[styles.likeBtn, { backgroundColor: post.liked ? `${c.primary}22` : c.background }]}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={post.liked ? 'Beğeniyi geri al' : 'Beğen'}>
+                  <Ionicons name={post.liked ? 'heart' : 'heart-outline'} size={20} color={post.liked ? c.primary : c.textSecondary} />
+                  <Text style={{ color: post.liked ? c.primary : c.textSecondary, fontWeight: '700', fontSize: 13 }}>
+                    {post.like_count > 0 ? post.like_count : 'Beğen'}
+                  </Text>
+                </Pressable>
+                <View style={styles.countChip}>
+                  <Ionicons name="chatbubble-outline" size={18} color={c.textSecondary} />
+                  <Text style={{ color: c.textSecondary, fontWeight: '600', fontSize: 13 }}>{comments?.length ?? post.comment_count}</Text>
+                </View>
+              </View>
             </View>
           </Card>
 
@@ -126,17 +141,22 @@ export default function PostDetailScreen() {
             <Pressable
               onPress={onSend}
               disabled={!text.trim() || add.isPending}
-              style={styles.sendBtn}
+              style={[styles.sendBtn, { backgroundColor: text.trim() ? c.primary : c.background }]}
               accessibilityRole="button"
               accessibilityLabel="Yorumu gönder">
-              <Ionicons name="send" size={20} color={text.trim() ? c.primary : c.textSecondary} />
+              <Ionicons name="send" size={18} color={text.trim() ? c.onPrimary : c.textSecondary} />
             </Pressable>
           </View>
 
           {/* Yorumlar */}
-          <Text style={[styles.sectionTitle, { color: c.text }]}>
-            Yorumlar {comments?.length ? `(${comments.length})` : ''}
-          </Text>
+          <View style={styles.commentsHead}>
+            <Text style={[styles.sectionTitle, { color: c.text }]}>Yorumlar</Text>
+            {comments?.length ? (
+              <View style={[styles.countBadge, { backgroundColor: c.primary }]}>
+                <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '800' }}>{comments.length}</Text>
+              </View>
+            ) : null}
+          </View>
           {commentsLoading ? (
             <Loading />
           ) : (comments?.length ?? 0) === 0 ? (
@@ -180,40 +200,46 @@ function CommentRow({
   const name = displayName(comment.author);
   return (
     <View style={styles.commentRow}>
-      <Pressable onPress={onOpenAuthor} hitSlop={4}>
-        <Avatar name={name} url={comment.author?.avatar_url} size={32} />
+      <Pressable onPress={onOpenAuthor} hitSlop={4} accessibilityRole="button" accessibilityLabel={`${name} profili`}>
+        <Avatar name={name} url={comment.author?.avatar_url} size={34} />
       </Pressable>
-      <View style={{ flex: 1 }}>
+      <View style={[styles.commentBubble, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
         <View style={styles.commentHead}>
-          <Text style={[styles.commentName, { color: c.text }]}>{name}</Text>
+          <Text style={[styles.commentName, { color: c.text }]} numberOfLines={1}>
+            {name}
+          </Text>
           <Text style={{ color: c.textSecondary, fontSize: 11 }}>{timeAgo(comment.created_at)}</Text>
+          {canReport ? (
+            <Pressable onPress={onReport} hitSlop={8} accessibilityRole="button" accessibilityLabel="Yorumu şikayet et">
+              <Ionicons name="flag-outline" size={15} color={c.textSecondary} />
+            </Pressable>
+          ) : null}
+          {canDelete ? (
+            <Pressable onPress={onDelete} hitSlop={8} accessibilityRole="button" accessibilityLabel="Yorumu sil">
+              <Ionicons name="trash-outline" size={16} color={c.textSecondary} />
+            </Pressable>
+          ) : null}
         </View>
-        <Text style={{ color: c.text }}>{comment.body}</Text>
+        <Text style={{ color: c.text, fontSize: 14, lineHeight: 20 }}>{comment.body}</Text>
         {comment.hidden_at ? (
           <Text style={{ color: c.danger, fontSize: 11, fontStyle: 'italic', marginTop: 2 }}>
             Bu yorum şikayet edildiği için gizlendi.
           </Text>
         ) : null}
       </View>
-      {canReport ? (
-        <Pressable onPress={onReport} hitSlop={8} accessibilityRole="button" accessibilityLabel="Yorumu şikayet et">
-          <Ionicons name="flag-outline" size={15} color={c.textSecondary} />
-        </Pressable>
-      ) : null}
-      {canDelete ? (
-        <Pressable onPress={onDelete} hitSlop={8} accessibilityRole="button" accessibilityLabel="Yorumu sil">
-          <Ionicons name="trash-outline" size={16} color={c.textSecondary} />
-        </Pressable>
-      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  postInner: { gap: Spacing.two },
+  postInner: { gap: Spacing.three, padding: Spacing.three },
   who: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   image: { width: '100%', aspectRatio: 1, borderRadius: 12 },
-  likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
+  countChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  commentsHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  countBadge: { minWidth: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -223,9 +249,10 @@ const styles = StyleSheet.create({
     paddingRight: 6,
   },
   input: { flex: 1, minHeight: 44, maxHeight: 120, paddingVertical: 10, fontSize: 15 },
-  sendBtn: { padding: 10 },
+  sendBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   sectionTitle: { ...Type.sectionTitle },
-  commentRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start', paddingVertical: 6 },
-  commentHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  commentName: { fontSize: 14, fontWeight: '700' },
+  commentRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start' },
+  commentBubble: { flex: 1, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, gap: 2 },
+  commentHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  commentName: { fontSize: 14, fontWeight: '700', flex: 1 },
 });
