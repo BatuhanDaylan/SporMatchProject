@@ -22,7 +22,9 @@ export function useProgramSocial(programId?: string) {
         supabase.from('program_likes').select('program_id').eq('program_id', programId!).eq('user_id', user!.id).maybeSingle(),
         supabase.from('program_saves').select('program_id').eq('program_id', programId!).eq('user_id', user!.id).maybeSingle(),
       ]);
-      if (likeCount.error) throw likeCount.error;
+      // Hata varsa "beğenmemiş/kaydetmemiş" sanılmasın (yanlış toggle yönü).
+      const failed = likeCount.error ?? liked.error ?? saved.error;
+      if (failed) throw failed;
       return { likeCount: likeCount.count ?? 0, liked: !!liked.data, saved: !!saved.data };
     },
   });

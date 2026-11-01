@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
+import { useEffect } from 'react';
 
 import { assertClean } from '@/lib/moderation';
 import { supabase } from '@/lib/supabase';
@@ -165,6 +166,27 @@ export function useEventDetail(eventId?: string) {
       return data as unknown as EventDetail | null;
     },
   });
+
+  // Katılım/ayrılma anında detay ve listeler tazelensin (event_participants realtime yayında).
+  useEffect(() => {
+    if (!eventId) return;
+    const ch = supabase
+      .channel(`event-participants-${eventId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'event_participants', filter: `event_id=eq.${eventId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ['event-detail', eventId] });
+          qc.invalidateQueries({ queryKey: ['city-events'] });
+          qc.invalidateQueries({ queryKey: ['nearby-events'] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [eventId, qc]);
+
   return { ...query, refetchKey: queryKey, qc };
 }
 
@@ -173,6 +195,7 @@ export function useEventActions(eventId?: string) {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['event-detail', eventId] });
     qc.invalidateQueries({ queryKey: ['nearby-events'] });
+    qc.invalidateQueries({ queryKey: ['city-events'] });
     qc.invalidateQueries({ queryKey: ['my-events'] });
   };
 
@@ -240,6 +263,7 @@ export function useCreateEvent() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['nearby-events'] });
+      qc.invalidateQueries({ queryKey: ['city-events'] });
       qc.invalidateQueries({ queryKey: ['my-events'] });
     },
   });
