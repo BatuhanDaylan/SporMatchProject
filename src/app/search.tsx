@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     marginTop: Spacing.one,
   },
-  section: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: Spacing.three, marginBottom: Spacing.one },
+  section: { fontSize: 14, fontWeight: '700', marginTop: Spacing.three, marginBottom: Spacing.one },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.two },
   progIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

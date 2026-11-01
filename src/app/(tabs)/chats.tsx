@@ -1,9 +1,8 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
-
 import { displayName } from '@/lib/displayName';
+import { timeAgo } from '@/lib/datetime';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,16 +27,34 @@ export default function ChatsScreen() {
   }
 
   const reqList = requests.data ?? [];
+  const totalUnread = (data ?? []).reduce((n, conv) => n + conv.unread, 0);
+
+  const Title = (
+    <View style={styles.titleRow}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.title, { color: c.text }]}>Sohbet</Text>
+        <Text style={[styles.subtitle, { color: c.textSecondary }]}>Eşleştiğin sporcularla yaz.</Text>
+      </View>
+      {totalUnread > 0 ? (
+        <View style={[styles.unreadPill, { backgroundColor: c.primary }]}>
+          <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '800' }}>{totalUnread} yeni</Text>
+        </View>
+      ) : null}
+    </View>
+  );
 
   const Header = (
-    <View>
-      <Text style={[styles.title, { color: c.text }]}>Sohbet</Text>
+    <View style={{ gap: Spacing.three, marginBottom: Spacing.two }}>
+      {Title}
 
       {reqList.length > 0 ? (
-        <View style={{ marginBottom: Spacing.three, gap: Spacing.two }}>
-          <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
-            Sohbet istekleri ({reqList.length})
-          </Text>
+        <View style={[styles.reqGroup, { backgroundColor: `${c.primary}14`, borderColor: `${c.primary}55` }]}>
+          <View style={styles.reqHead}>
+            <Text style={[styles.sectionTitle, { color: c.text }]}>Sohbet istekleri</Text>
+            <View style={[styles.countBadge, { backgroundColor: c.primary }]}>
+              <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '800' }}>{reqList.length}</Text>
+            </View>
+          </View>
           {reqList.map((r) => (
             <RequestRow
               key={r.match_id}
@@ -51,6 +68,10 @@ export default function ChatsScreen() {
           ))}
         </View>
       ) : null}
+
+      {reqList.length > 0 && (data?.length ?? 0) > 0 ? (
+        <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>Mesajlar</Text>
+      ) : null}
     </View>
   );
 
@@ -58,12 +79,12 @@ export default function ChatsScreen() {
     <Screen>
       {isError ? (
         <>
-          <Text style={[styles.title, { color: c.text }]}>Sohbet</Text>
+          {Title}
           <ErrorState onRetry={refetch} />
         </>
       ) : isLoading ? (
         <>
-          <Text style={[styles.title, { color: c.text }]}>Sohbet</Text>
+          {Title}
           <Loading />
         </>
       ) : (
@@ -117,23 +138,27 @@ function RequestRow({
   const name = displayName(req);
   return (
     <Card style={styles.reqCard}>
-      <Pressable onPress={onOpenProfile} style={styles.reqInfo} hitSlop={4}>
+      <Pressable onPress={onOpenProfile} style={styles.reqInfo} hitSlop={4} accessibilityRole="button" accessibilityLabel={`${name} profili`}>
         <Avatar name={name} url={req.avatar_url} size={44} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.name, { color: c.text }]}>{name}</Text>
-          <Text style={{ color: c.textSecondary, fontSize: 13 }}>Sohbet etmek istiyor</Text>
+          <Text style={[styles.name, { color: c.text }]} numberOfLines={1}>
+            {name}
+          </Text>
+          <Text style={{ color: c.textSecondary, fontSize: 13 }}>Sohbet etmek istiyor · {timeAgo(req.created_at)}</Text>
         </View>
       </Pressable>
       <View style={styles.reqActions}>
         <Pressable
           onPress={onDecline}
           disabled={busy}
+          accessibilityRole="button"
           style={[styles.reqBtn, { borderColor: c.border }]}>
           <Text style={{ color: c.textSecondary, fontWeight: '600' }}>Reddet</Text>
         </Pressable>
         <Pressable
           onPress={onAccept}
           disabled={busy}
+          accessibilityRole="button"
           style={[styles.reqBtn, { backgroundColor: c.primary, borderColor: c.primary }]}>
           {busy ? (
             <ActivityIndicator size="small" color={c.onPrimary} />
@@ -149,34 +174,57 @@ function RequestRow({
 function ConversationRow({ conv, onPress }: { conv: Conversation; onPress: () => void }) {
   const c = useColors();
   const name = conv.partner_name || conv.partner_username || 'Sporcu';
+  const unread = conv.unread > 0;
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${name}${unread ? `, ${conv.unread} okunmamış mesaj` : ''}`}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: c.backgroundElement, borderColor: c.border, opacity: pressed ? 0.7 : 1 },
+        {
+          backgroundColor: unread ? `${c.primary}14` : c.backgroundElement,
+          borderColor: unread ? `${c.primary}55` : c.border,
+          opacity: pressed ? 0.7 : 1,
+        },
       ]}>
       <Avatar name={name} url={conv.partner_avatar} size={52} />
       <View style={{ flex: 1 }}>
-        <Text style={[styles.name, { color: c.text }]}>{name}</Text>
-        <Text numberOfLines={1} style={{ color: c.textSecondary, fontSize: 13 }}>
+        <Text style={[styles.name, { color: c.text }]} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text
+          numberOfLines={1}
+          style={{ color: unread ? c.text : c.textSecondary, fontSize: 13, fontWeight: unread ? '600' : '400' }}>
           {conv.last_message ?? 'Selam ver! 👋'}
         </Text>
       </View>
-      {conv.unread > 0 ? (
-        <View style={[styles.badge, { backgroundColor: c.primary }]}>
-          <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '700' }}>{conv.unread}</Text>
-        </View>
-      ) : null}
+      <View style={styles.rowRight}>
+        {conv.last_at ? (
+          <Text style={{ color: unread ? c.primary : c.textSecondary, fontSize: 12, fontWeight: unread ? '700' : '500' }}>
+            {timeAgo(conv.last_at)}
+          </Text>
+        ) : null}
+        {unread ? (
+          <View style={[styles.badge, { backgroundColor: c.primary }]}>
+            <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '700' }}>{conv.unread}</Text>
+          </View>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { ...Type.displayTitle, marginBottom: Spacing.two },
-  sectionTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.three, paddingHorizontal: Spacing.four },
-  reqCard: { borderRadius: 16, borderWidth: 1, padding: Spacing.three, gap: Spacing.two },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  title: { ...Type.displayTitle },
+  subtitle: { fontSize: 14, marginTop: 2 },
+  unreadPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+  sectionTitle: { fontSize: 14, fontWeight: '700' },
+  reqGroup: { borderRadius: 18, borderWidth: 1, padding: Spacing.two, gap: Spacing.two },
+  reqHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingHorizontal: Spacing.one, paddingTop: Spacing.one },
+  countBadge: { minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  reqCard: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
   reqInfo: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   reqActions: { flexDirection: 'row', gap: Spacing.two },
   reqBtn: {
@@ -190,12 +238,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.three,
     padding: Spacing.two,
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: Spacing.two,
   },
+  rowRight: { alignItems: 'flex-end', gap: 6 },
   name: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   badge: { minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
 });
