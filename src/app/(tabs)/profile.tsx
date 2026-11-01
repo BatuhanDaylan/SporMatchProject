@@ -13,6 +13,7 @@ import { Screen } from '@/components/ui/screen';
 import { useColors } from '@/hooks/useColors';
 import { useFollow } from '@/hooks/useFollow';
 import { useNotifications } from '@/hooks/useNotifications';
+import { usePro } from '@/hooks/usePro';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { useSports } from '@/hooks/useSports';
@@ -35,6 +36,7 @@ export default function ProfileScreen() {
   const { data: stats, isLoading: statsLoading } = useProfileStats();
   const { data: followInfo } = useFollow(user?.id);
   const { unread } = useNotifications();
+  const { isPro } = usePro();
 
   function confirmSignOut() {
     showAlert('Çıkış Yap', 'Hesabından çıkmak istediğine emin misin?', [
@@ -57,7 +59,7 @@ export default function ProfileScreen() {
   const location = [profile?.district, profile?.province].filter(Boolean).join(', ');
 
   return (
-    <Screen scroll>
+    <Screen scroll floatingTabBar>
       <View style={styles.header}>
         <Text style={[styles.title, { color: c.text }]}>Profil</Text>
         <IconButton
@@ -94,6 +96,20 @@ export default function ProfileScreen() {
         onOpenFollowing={() => router.push(`/follows?userId=${user?.id}&tab=following`)}
         footer={
           <>
+            {!isPro ? (
+              <Pressable
+                onPress={() => router.push('/pro')}
+                style={({ pressed }) => [
+                  styles.proBanner,
+                  { backgroundColor: c.backgroundElement, borderColor: c.primary, opacity: pressed ? 0.85 : 1 },
+                ]}>
+                <Ionicons name="flash" size={18} color={c.primary} />
+                <Text style={{ color: c.text, fontWeight: '700', fontSize: 14, flex: 1 }}>
+                  SporMatch Pro'ya geç — sınırsız eşleş
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color={c.textSecondary} />
+              </Pressable>
+            ) : null}
             <View style={{ marginTop: Spacing.two }}>
               <Button title="Profili Düzenle" size="lg" onPress={() => router.push('/profile-edit')} />
             </View>
@@ -119,6 +135,14 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { ...Type.displayTitle },
+  proBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: Spacing.three,
+  },
   unreadDot: {
     position: 'absolute',
     top: -2,

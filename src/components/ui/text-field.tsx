@@ -9,13 +9,25 @@ type Props = TextInputProps & {
   error?: string | null;
 };
 
+// Bir üst satırda (`style={{ flex: 1 }}` gibi) verilen boyutlandırma özellikleri, iç TextInput'a
+// değil dış sarmalayıcıya uygulanmalı — yoksa üst flex-row içinde daralmaz ve kardeşlerini taşırır.
+const LAYOUT_KEYS = ['flex', 'flexGrow', 'flexShrink', 'alignSelf', 'width', 'minWidth', 'maxWidth'] as const;
+
 export function TextField({ label, error, style, ...rest }: Props) {
   const c = useColors();
   const [focused, setFocused] = useState(false);
   const borderColor = error ? c.danger : focused ? c.primary : c.border;
 
+  const flat = StyleSheet.flatten(style) ?? {};
+  const layoutStyle: Record<string, unknown> = {};
+  const inputStyle: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(flat)) {
+    if ((LAYOUT_KEYS as readonly string[]).includes(key)) layoutStyle[key] = value;
+    else inputStyle[key] = value;
+  }
+
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, layoutStyle]}>
       {label ? <Text style={[styles.label, { color: c.textSecondary }]}>{label}</Text> : null}
       <TextInput
         placeholderTextColor={c.textSecondary}
@@ -24,7 +36,7 @@ export function TextField({ label, error, style, ...rest }: Props) {
         style={[
           styles.input,
           { color: c.text, backgroundColor: c.backgroundElement, borderColor },
-          style,
+          inputStyle,
         ]}
         {...rest}
       />

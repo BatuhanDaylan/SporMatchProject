@@ -23,10 +23,11 @@ export const Colors = {
     onDanger: '#FFFFFF',
     success: '#30A46C',
     onSuccess: '#FFFFFF',
-    // Alt menü (tab bar) — her iki modda da koyu (slate), aktif ikon vurgu rengiyle uyumlu
-    tabBar: '#1E293B',
-    tabBarBorder: '#2C3A4F',
-    tabBarActive: '#FF8A50',
+    // Alt menü (tab bar) — diğer kartlarla aynı yüzey rengi (beyaz + ince kenarlık),
+    // koyu lacivert yerine uygulamanın geri kalanıyla uyumlu; aktif ikon turuncu vurgu.
+    tabBar: '#FFFFFF',
+    tabBarBorder: '#E2E6EC',
+    tabBarActive: '#F0501A',
     tabBarInactive: '#94A3B8',
   },
   dark: {
@@ -45,9 +46,9 @@ export const Colors = {
     onDanger: '#2B0E02',
     success: '#3DD68C',
     onSuccess: '#2B0E02',
-    tabBar: '#1E293B',
-    tabBarBorder: '#2C3A4F',
-    tabBarActive: '#FF8A50',
+    tabBar: '#17191E',
+    tabBarBorder: '#282B31',
+    tabBarActive: '#FF7A3D',
     tabBarInactive: '#94A3B8',
   },
 } as const;

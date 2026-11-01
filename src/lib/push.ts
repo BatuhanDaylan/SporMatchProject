@@ -53,7 +53,13 @@ export async function registerForPushNotifications(userId: string): Promise<stri
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     lastToken = token;
     if (__DEV__) console.log('📲 Expo push token:', token); // test için: expo.dev/notifications'a yapıştır
-    await supabase.from('push_tokens').upsert({ token, user_id: userId, platform: Platform.OS });
+    const { error } = await supabase
+      .from('push_tokens')
+      .upsert({ token, user_id: userId, platform: Platform.OS });
+    if (error) {
+      console.warn('Push token kaydedilemedi:', error.message);
+      return null;
+    }
     return token;
   } catch (e) {
     console.warn('Push token alınamadı:', e);
@@ -75,8 +81,9 @@ export async function unregisterPushToken(): Promise<void> {
       if (projectId) token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     }
     if (token) {
-      await supabase.from('push_tokens').delete().eq('token', token);
-      lastToken = null;
+      const { error } = await supabase.from('push_tokens').delete().eq('token', token);
+      if (error) console.warn('Push token silinemedi:', error.message);
+      else lastToken = null;
     }
   } catch {
     // sessizce geç — çıkışı asla bloklama

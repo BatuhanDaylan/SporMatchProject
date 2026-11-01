@@ -1,14 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Stack, useRouter } from 'expo-router';
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Chip } from '@/components/ui/chip';
+import { MultiSelectField } from '@/components/ui/multi-select-field';
 import { PickerField } from '@/components/ui/picker-field';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
+import { WheelField } from '@/components/ui/wheel-field';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useSports } from '@/hooks/useSports';
@@ -61,14 +62,6 @@ export default function ProfileEditScreen() {
       setAvatarUrl(profile.avatar_url);
     }
   }, [profile]);
-
-  function toggleIn(setFn: typeof setGoals, value: string) {
-    setFn((prev) => {
-      const next = new Set(prev);
-      next.has(value) ? next.delete(value) : next.add(value);
-      return next;
-    });
-  }
 
   function onSelectProvince(p: string) {
     setProvince(p);
@@ -174,42 +167,56 @@ export default function ProfileEditScreen() {
         />
       </View>
 
-      <EditSection title="Seviye" c={c}>
-        {LEVELS.map((l) => (
-          <Chip key={l.id} label={l.label} selected={level === l.id} onPress={() => setLevel(l.id)} />
-        ))}
-      </EditSection>
+      <View style={{ gap: Spacing.two }}>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>Seviye</Text>
+        <WheelField
+          title="Seviye seç"
+          icon="trending-up-outline"
+          items={[null, ...LEVELS.map((l) => l.id)]}
+          value={level}
+          renderLabel={(id) => (id === null ? 'Seçilmedi' : LEVELS.find((l) => l.id === id)?.label ?? 'Seçilmedi')}
+          onChange={setLevel}
+        />
+      </View>
 
-      <EditSection title="Hedefler" hint={goals.size ? `${goals.size} seçili` : undefined} c={c}>
-        {GOAL_OPTIONS.map((g) => (
-          <Chip key={g} label={g} selected={goals.has(g)} onPress={() => toggleIn(setGoals, g)} />
-        ))}
-      </EditSection>
+      <View style={{ gap: Spacing.two }}>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>Hedefler</Text>
+        <MultiSelectField
+          title="Hedefleri seç"
+          icon="flag-outline"
+          items={GOAL_OPTIONS}
+          values={goals}
+          getKey={(g) => g}
+          renderLabel={(g) => g}
+          onChange={setGoals}
+        />
+      </View>
 
-      <EditSection
-        title="Müsaitlik"
-        hint={availability.size ? `${availability.size} seçili` : undefined}
-        c={c}>
-        {AVAILABILITY_OPTIONS.map((a) => (
-          <Chip
-            key={a}
-            label={a}
-            selected={availability.has(a)}
-            onPress={() => toggleIn(setAvailability, a)}
-          />
-        ))}
-      </EditSection>
+      <View style={{ gap: Spacing.two }}>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>Müsaitlik</Text>
+        <MultiSelectField
+          title="Müsaitliği seç"
+          icon="time-outline"
+          items={AVAILABILITY_OPTIONS}
+          values={availability}
+          getKey={(a) => a}
+          renderLabel={(a) => a}
+          onChange={setAvailability}
+        />
+      </View>
 
-      <EditSection title="Sporlar" hint={selected.size ? `${selected.size} seçili` : undefined} c={c}>
-        {sports?.map((s) => (
-          <Chip
-            key={s.id}
-            label={`${s.icon ?? ''} ${s.name}`.trim()}
-            selected={selected.has(s.id)}
-            onPress={() => toggleIn(setSelected, s.id)}
-          />
-        ))}
-      </EditSection>
+      <View style={{ gap: Spacing.two }}>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>Sporlar</Text>
+        <MultiSelectField
+          title="Sporları seç"
+          icon="basketball-outline"
+          items={sports ?? []}
+          values={selected}
+          getKey={(s) => s.id}
+          renderLabel={(s) => `${s.icon ?? ''} ${s.name}`.trim()}
+          onChange={setSelected}
+        />
+      </View>
 
       {error ? <Text style={{ color: c.danger }}>{error}</Text> : null}
 
@@ -218,28 +225,6 @@ export default function ProfileEditScreen() {
       </View>
       <View style={{ height: Spacing.four }} />
     </Screen>
-  );
-}
-
-function EditSection({
-  title,
-  hint,
-  c,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  c: ReturnType<typeof useColors>;
-  children: ReactNode;
-}) {
-  return (
-    <View style={{ gap: Spacing.two }}>
-      <View style={styles.sectionHead}>
-        <Text style={[styles.sectionTitle, { color: c.text }]}>{title}</Text>
-        {hint ? <Text style={{ color: c.textSecondary, fontSize: 13 }}>{hint}</Text> : null}
-      </View>
-      <View style={styles.chips}>{children}</View>
-    </View>
   );
 }
 
@@ -257,7 +242,5 @@ const styles = StyleSheet.create({
     borderWidth: 3,
   },
   locationRow: { flexDirection: 'row', gap: Spacing.two },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sectionTitle: { fontSize: 17, fontWeight: '700' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, alignItems: 'center' },
 });

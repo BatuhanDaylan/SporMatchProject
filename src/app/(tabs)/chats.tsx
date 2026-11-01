@@ -12,7 +12,7 @@ import { Screen } from '@/components/ui/screen';
 import { useColors } from '@/hooks/useColors';
 import { useChatRequests, type ChatRequest } from '@/hooks/useChatRequests';
 import { useConversations, type Conversation } from '@/hooks/useChat';
-import { Spacing, Type } from '@/constants/theme';
+import { BottomTabInset, Spacing, Type } from '@/constants/theme';
 
 export default function ChatsScreen() {
   const c = useColors();
@@ -69,7 +69,7 @@ export default function ChatsScreen() {
           data={data}
           keyExtractor={(x) => x.conversation_id}
           ListHeaderComponent={Header}
-          contentContainerStyle={{ paddingBottom: Spacing.six }}
+          contentContainerStyle={{ paddingBottom: BottomTabInset, flexGrow: 1 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -173,7 +173,7 @@ function ConversationRow({ conv, onPress }: { conv: Conversation; onPress: () =>
 const styles = StyleSheet.create({
   title: { ...Type.displayTitle, marginBottom: Spacing.two },
   sectionTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  empty: { alignItems: 'center', justifyContent: 'center', gap: Spacing.three, paddingHorizontal: Spacing.four, paddingTop: Spacing.six },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.three, paddingHorizontal: Spacing.four },
   reqCard: { borderRadius: 16, borderWidth: 1, padding: Spacing.three, gap: Spacing.two },
   reqInfo: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   reqActions: { flexDirection: 'row', gap: Spacing.two },

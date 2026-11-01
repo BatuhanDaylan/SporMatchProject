@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
+import { WheelField } from '@/components/ui/wheel-field';
 import { useColors } from '@/hooks/useColors';
 import { useProgram, useProgramMutations } from '@/hooks/usePrograms';
 import { useSports } from '@/hooks/useSports';
@@ -165,16 +166,18 @@ export default function ProgramEditScreen() {
 
       {/* Spor */}
       <Text style={[styles.label, { color: c.textSecondary }]}>Spor (opsiyonel)</Text>
-      <View style={styles.row}>
-        {sports?.map((s) => (
-          <Chip
-            key={s.id}
-            label={`${s.icon ?? ''} ${s.name}`.trim()}
-            selected={sportId === s.id}
-            onPress={() => setSportId((cur) => (cur === s.id ? null : s.id))}
-          />
-        ))}
-      </View>
+      <WheelField
+        title="Spor seç"
+        icon="basketball-outline"
+        items={[null, ...(sports?.map((s) => s.id) ?? [])]}
+        value={sportId}
+        renderLabel={(id) => {
+          if (id === null) return 'Seçilmedi';
+          const s = sports?.find((x) => x.id === id);
+          return s ? `${s.icon ?? ''} ${s.name}`.trim() : 'Seçilmedi';
+        }}
+        onChange={setSportId}
+      />
 
       <Text style={[styles.label, { color: c.textSecondary }]}>Görünürlük</Text>
       <View style={styles.row}>
@@ -301,7 +304,7 @@ function ExerciseEditor({
   return (
     <View style={[styles.exCard, { backgroundColor: c.backgroundElement }]}>
       <View style={styles.dayHeader}>
-        <TextField placeholder="Egzersiz adı (ör. Bench Press)" value={name} onChangeText={onRename} style={{ flex: 1 }} />
+        <TextField placeholder="Egzersiz adı" value={name} onChangeText={onRename} style={{ flex: 1 }} />
         <IconBtn name="chevron-up" color={c.textSecondary} disabled={!canUp} onPress={onMoveUp} />
         <IconBtn name="chevron-down" color={c.textSecondary} disabled={!canDown} onPress={onMoveDown} />
         <IconBtn name="copy-outline" color={c.textSecondary} onPress={onDuplicate} />

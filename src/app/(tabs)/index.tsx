@@ -37,7 +37,7 @@ export default function DiscoverScreen() {
   );
 
   return (
-    <Screen scroll>
+    <Screen scroll floatingTabBar>
       <Text style={[styles.title, { color: c.text }]}>Keşfet</Text>
 
       {/* Arama — ikon yerine davetkâr bir çubuk */}

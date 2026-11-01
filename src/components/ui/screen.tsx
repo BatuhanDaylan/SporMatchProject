@@ -3,20 +3,23 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 type Props = {
   children: ReactNode;
   scroll?: boolean;
   /** Klavye/uzun içerik için dikey ortalamayı kapat. */
   center?: boolean;
+  /** Kayan (floating) sekme çubuğunun altında kalan ekranlarda içerik boşluğu bırakır. */
+  floatingTabBar?: boolean;
 };
 
 /** Tema arka planlı, güvenli-alan destekli sayfa sarmalayıcı. */
-export function Screen({ children, scroll = false, center = false }: Props) {
+export function Screen({ children, scroll = false, center = false, floatingTabBar = false }: Props) {
   const c = useColors();
+  const extraBottom = floatingTabBar ? { paddingBottom: BottomTabInset } : null;
   const inner = (
-    <View style={[styles.inner, center && styles.center]}>{children}</View>
+    <View style={[styles.inner, center && styles.center, extraBottom]}>{children}</View>
   );
 
   return (

@@ -15,7 +15,7 @@ import { useColors } from '@/hooks/useColors';
 import { useMyPrograms, type Program } from '@/hooks/usePrograms';
 import { useSavedPrograms } from '@/hooks/useProgramSocial';
 import type { DiscoverProgram } from '@/hooks/useDiscover';
-import { Spacing, Type } from '@/constants/theme';
+import { BottomTabInset, Spacing, Type } from '@/constants/theme';
 
 type Mode = 'mine' | 'saved';
 
@@ -96,14 +96,14 @@ export default function ProgramsScreen() {
           <FlatList
             data={mine.data}
             keyExtractor={(p) => p.id}
-            contentContainerStyle={{ gap: Spacing.two, paddingVertical: Spacing.two, paddingBottom: Spacing.six }}
+            contentContainerStyle={{ gap: Spacing.two, paddingVertical: Spacing.two, paddingBottom: BottomTabInset }}
             renderItem={({ item }) => <ProgramCard program={item} onPress={() => router.push(`/program/${item.id}`)} />}
           />
         ) : (
           <FlatList
             data={saved.data}
             keyExtractor={(p) => p.id}
-            contentContainerStyle={{ gap: Spacing.two, paddingVertical: Spacing.two, paddingBottom: Spacing.six }}
+            contentContainerStyle={{ gap: Spacing.two, paddingVertical: Spacing.two, paddingBottom: BottomTabInset }}
             renderItem={({ item }) => <SavedCard program={item} onPress={() => router.push(`/program/${item.id}`)} />}
           />
         )}

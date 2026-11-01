@@ -1,40 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getErrorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/store/alert';
 
 import { Button } from '@/components/ui/button';
-import { Chip } from '@/components/ui/chip';
+import { CalendarField } from '@/components/ui/calendar-field';
 import { LocationPickerModal } from '@/components/location-picker-modal';
 import { MapView } from '@/components/map-view';
 import { PickerField } from '@/components/ui/picker-field';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
+import { TimeField } from '@/components/ui/time-field';
+import { WheelField } from '@/components/ui/wheel-field';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useMySports, useSports } from '@/hooks/useSports';
 import { getCoords, useCreateEvent } from '@/hooks/useEvents';
 import { PROVINCES, DISTRICTS } from '@/constants/tr-cities';
-import { nextDays, shortDate, timeSlots } from '@/lib/datetime';
+import { startOfDay } from '@/lib/datetime';
 import { FormSection, Spacing } from '@/constants/theme';
 
 // Konum alınamazsa başlangıç merkezi (İstanbul).
 const FALLBACK = { lat: 41.0082, lng: 28.9784 };
 
-/** Bugün için gelecekteki ilk saat slotu (en az 1 saat sonrası). */
-function nextSlotIdx(): number {
-  const t = Date.now() + 60 * 60 * 1000;
-  const now = new Date(t);
-  const idx = SLOTS.findIndex((s) => s.h > now.getHours() || (s.h === now.getHours() && s.m >= now.getMinutes()));
-  return idx >= 0 ? idx : SLOTS.findIndex((s) => s.h === 18 && s.m === 0);
+/** Varsayılan saat: 1 saat sonrası. */
+function defaultTime(): { hour: number; minute: number } {
+  const t = new Date(Date.now() + 60 * 60 * 1000);
+  return { hour: t.getHours(), minute: t.getMinutes() };
 }
 
 const CAPACITIES: (number | null)[] = [null, 2, 4, 6, 10, 20];
-const DAYS = nextDays(8);
-const SLOTS = timeSlots();
 
 export default function CreateEventScreen() {
   const c = useColors();
@@ -49,8 +47,8 @@ export default function CreateEventScreen() {
   const [placeName, setPlaceName] = useState('');
   const [description, setDescription] = useState('');
   const [sportId, setSportId] = useState<string | null>(null);
-  const [dayIdx, setDayIdx] = useState(0);
-  const [slotIdx, setSlotIdx] = useState(nextSlotIdx);
+  const [eventDate, setEventDate] = useState(() => startOfDay(new Date()));
+  const [{ hour, minute }, setTime] = useState(defaultTime);
   const [capacity, setCapacity] = useState<number | null>(null);
   const [center, setCenter] = useState(FALLBACK);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -81,9 +79,8 @@ export default function CreateEventScreen() {
   }, [profile]);
 
   function buildStartsAt(): Date {
-    const d = new Date(DAYS[dayIdx]);
-    const slot = SLOTS[slotIdx] ?? SLOTS[0];
-    d.setHours(slot.h, slot.m, 0, 0);
+    const d = new Date(eventDate);
+    d.setHours(hour, minute, 0, 0);
     return d;
   }
 
@@ -146,48 +143,35 @@ export default function CreateEventScreen() {
           Profilinden spor eklersen burada seçebilirsin (isteğe bağlı).
         </Text>
       ) : (
-        <View style={styles.row}>
-          {mySports.map((s) => (
-            <Chip
-              key={s.id}
-              label={`${s.icon ?? ''} ${s.name}`.trim()}
-              selected={sportId === s.id}
-              onPress={() => setSportId(sportId === s.id ? null : s.id)}
-            />
-          ))}
-        </View>
+        <WheelField
+          title="Spor seç"
+          icon="basketball-outline"
+          items={[null, ...mySports.map((s) => s.id)]}
+          value={sportId}
+          renderLabel={(id) => {
+            if (id === null) return 'Seçilmedi';
+            const s = mySports.find((x) => x.id === id);
+            return s ? `${s.icon ?? ''} ${s.name}`.trim() : 'Seçilmedi';
+          }}
+          onChange={setSportId}
+        />
       )}
 
       <Text style={[styles.section, { color: c.text }]}>Gün</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.noGrow} contentContainerStyle={styles.row}>
-        {DAYS.map((d, i) => (
-          <Chip
-            key={i}
-            label={i === 0 ? 'Bugün' : i === 1 ? 'Yarın' : shortDate(d)}
-            selected={dayIdx === i}
-            onPress={() => setDayIdx(i)}
-          />
-        ))}
-      </ScrollView>
+      <CalendarField value={eventDate} onChange={setEventDate} />
 
       <Text style={[styles.section, { color: c.text }]}>Saat</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.noGrow} contentContainerStyle={styles.row}>
-        {SLOTS.map((s, i) => (
-          <Chip key={s.label} label={s.label} selected={slotIdx === i} onPress={() => setSlotIdx(i)} />
-        ))}
-      </ScrollView>
+      <TimeField hour={hour} minute={minute} onChange={(h, m) => setTime({ hour: h, minute: m })} />
 
       <Text style={[styles.section, { color: c.text }]}>Kontenjan</Text>
-      <View style={styles.row}>
-        {CAPACITIES.map((n) => (
-          <Chip
-            key={String(n)}
-            label={n === null ? 'Sınırsız' : `${n} kişi`}
-            selected={capacity === n}
-            onPress={() => setCapacity(n)}
-          />
-        ))}
-      </View>
+      <WheelField
+        title="Kontenjan seç"
+        icon="people-outline"
+        items={CAPACITIES}
+        value={capacity}
+        renderLabel={(n) => (n === null ? 'Sınırsız' : `${n} kişi`)}
+        onChange={setCapacity}
+      />
 
       <Text style={[styles.section, { color: c.text }]}>Açıklama (isteğe bağlı)</Text>
       <TextField
@@ -271,8 +255,6 @@ export default function CreateEventScreen() {
 
 const styles = StyleSheet.create({
   section: FormSection,
-  noGrow: { flexGrow: 0, flexShrink: 0 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, alignItems: 'center', paddingRight: Spacing.two },
   hint: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', padding: Spacing.two, borderRadius: 12, marginTop: Spacing.three },
   locBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: Spacing.two, marginTop: Spacing.two },
   locBtnBig: { alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderStyle: 'dashed', borderRadius: 14, paddingVertical: Spacing.four },

@@ -3,12 +3,11 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { showAlert } from '@/store/alert';
-
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Chip } from '@/components/ui/chip';
+import { MultiSelectField } from '@/components/ui/multi-select-field';
 import { Screen } from '@/components/ui/screen';
+import { WheelField } from '@/components/ui/wheel-field';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useMySports, useSports } from '@/hooks/useSports';
@@ -41,14 +40,6 @@ export default function MatchScreen() {
     router.push(`/match/${matchId}`);
   }, searching);
 
-  function toggle(id: string) {
-    setSelected((prev) => {
-      const base = prev.size ? new Set(prev) : new Set(mySports.map((s) => s.id));
-      base.has(id) ? base.delete(id) : base.add(id);
-      return base;
-    });
-  }
-
   async function onStart() {
     setError(null);
     setLimitHit(false);
@@ -80,7 +71,7 @@ export default function MatchScreen() {
 
   if (searching) {
     return (
-      <Screen center>
+      <Screen center floatingTabBar>
         <View style={styles.searchBox}>
           <ActivityIndicator size="large" color={c.primary} />
           <Text style={[styles.searchTitle, { color: c.text }]}>Eşleşme aranıyor…</Text>
@@ -95,7 +86,7 @@ export default function MatchScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll floatingTabBar>
       <Text style={[styles.title, { color: c.text }]}>Eşleş</Text>
       <Text style={[styles.subtitle, { color: c.textSecondary }]}>
         Yapmak istediğin sporları seç, yarıçapı belirle ve aktiviteyi başlat.
@@ -125,26 +116,28 @@ export default function MatchScreen() {
         {mySports.length === 0 ? (
           <Text style={{ color: c.textSecondary }}>Önce profilinden spor eklemelisin.</Text>
         ) : (
-          <View style={styles.row}>
-            {mySports.map((s) => (
-              <Chip
-                key={s.id}
-                label={`${s.icon ?? ''} ${s.name}`.trim()}
-                selected={selectedIds.includes(s.id)}
-                onPress={() => toggle(s.id)}
-              />
-            ))}
-          </View>
+          <MultiSelectField
+            title="Sporları seç"
+            icon="basketball-outline"
+            items={mySports}
+            values={new Set(selectedIds)}
+            getKey={(s) => s.id}
+            renderLabel={(s) => `${s.icon ?? ''} ${s.name}`.trim()}
+            onChange={setSelected}
+          />
         )}
 
         <View style={[styles.divider, { backgroundColor: c.border }]} />
 
         <Text style={[styles.setupLabel, { color: c.textSecondary }]}>YARIÇAP</Text>
-        <View style={styles.row}>
-          {RADII.map((r) => (
-            <Chip key={r} label={`${r} km`} selected={radiusKm === r} onPress={() => setRadiusKm(r)} />
-          ))}
-        </View>
+        <WheelField
+          title="Yarıçap seç"
+          icon="locate-outline"
+          items={RADII}
+          value={radiusKm}
+          renderLabel={(r) => `${r} km`}
+          onChange={setRadiusKm}
+        />
       </View>
 
       {limitHit ? (
@@ -157,9 +150,7 @@ export default function MatchScreen() {
             Ücretsiz katmanda günde 3 eşleşme başlatabilirsin. SporMatch Pro ile sınırsız eşleş.
           </Text>
           <Pressable
-            onPress={() =>
-              showAlert('Çok yakında', 'SporMatch Pro yakında geliyor!')
-            }
+            onPress={() => router.push('/pro')}
             style={[styles.proBtn, { backgroundColor: c.primary }]}
             accessibilityRole="button"
             accessibilityLabel="SporMatch Pro'ya geç">
@@ -192,7 +183,6 @@ const styles = StyleSheet.create({
   setupCard: { borderRadius: 16, borderWidth: 1, padding: Spacing.three, gap: Spacing.two },
   setupLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   divider: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, alignItems: 'center' },
   hintRow: { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' },
   eventsCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, padding: Spacing.two, borderRadius: 14, borderWidth: 1 },
   eventsIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

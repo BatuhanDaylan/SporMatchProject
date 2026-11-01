@@ -1,5 +1,10 @@
 const DAYS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 const MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+const MONTHS_LONG = [
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+];
+const WEEKDAYS_MON = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
 /** "14 Ağu Per" gibi kısa tarih. */
 export function shortDate(d: Date): string {
@@ -11,12 +16,54 @@ export function hhmm(d: Date): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+/** Saat/dakika/saniyeyi sıfırlanmış gün başlangıcı. */
+export function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+/** İki tarihin aynı takvim gününde olup olmadığı. */
+export function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+/** Ayın ilk günü. */
+export function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+/** N ay sonrası/öncesi (ayın ilk günü olarak). */
+export function addMonths(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth() + n, 1);
+}
+
+/** "Eylül 2026" gibi ay başlığı. */
+export function monthLabel(d: Date): string {
+  return `${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Pazartesi başlangıçlı hafta gün etiketleri. */
+export function weekdayLabels(): string[] {
+  return WEEKDAYS_MON;
+}
+
+/** Takvim ızgarası: verilen ayın günleri + Pazartesi hizası için baştaki/sondaki dolgu (null). Ay değişince yükseklik oynamasın diye her zaman tam 6 satır (42 hücre). */
+export function calendarGrid(monthStart: Date): (Date | null)[] {
+  const firstWeekday = (monthStart.getDay() + 6) % 7; // 0=Pzt
+  const daysInMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
+  const cells: (Date | null)[] = [];
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day++) cells.push(new Date(monthStart.getFullYear(), monthStart.getMonth(), day));
+  while (cells.length < 42) cells.push(null);
+  return cells;
+}
+
 /** Etkinlik başlangıcı için okunur etiket: "Bugün 18:30", "Yarın 09:00", "16 Ağu Cmt · 10:00". */
 export function eventWhen(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
-  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const dayDiff = Math.round((startOfDay(d) - startOfDay(now)) / 86400000);
+  const dayDiff = Math.round((startOfDay(d).getTime() - startOfDay(now).getTime()) / 86400000);
   const time = hhmm(d);
   if (dayDiff === 0) return `Bugün ${time}`;
   if (dayDiff === 1) return `Yarın ${time}`;
@@ -41,28 +88,4 @@ export function timeAgo(iso: string): string {
   const d = Math.floor(h / 24);
   if (d < 7) return `${d} gün`;
   return shortDate(new Date(iso));
-}
-
-/** Sonraki N gün için Date listesi (bugün dahil). */
-export function nextDays(n: number): Date[] {
-  const out: Date[] = [];
-  const base = new Date();
-  base.setHours(0, 0, 0, 0);
-  for (let i = 0; i < n; i++) {
-    const d = new Date(base);
-    d.setDate(base.getDate() + i);
-    out.push(d);
-  }
-  return out;
-}
-
-/** 06:00–23:00 arası 30 dk adımlı saat seçenekleri. */
-export function timeSlots(): { label: string; h: number; m: number }[] {
-  const out: { label: string; h: number; m: number }[] = [];
-  for (let h = 6; h <= 23; h++) {
-    for (const m of [0, 30]) {
-      out.push({ label: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, h, m });
-    }
-  }
-  return out;
 }

@@ -22,12 +22,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 1) Kalıcı oturumu yükle
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      // Realtime soketini yetkilendir (RLS'li postgres_changes için şart)
-      supabase.realtime.setAuth(data.session?.access_token ?? null);
-      setInitializing(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        // Realtime soketini yetkilendir (RLS'li postgres_changes için şart)
+        supabase.realtime.setAuth(data.session?.access_token ?? null);
+      })
+      .catch(() => {
+        /* oturum okunamadı → girişsiz devam; yükleme ekranında takılma */
+      })
+      .finally(() => setInitializing(false));
 
     // 2) Değişiklikleri dinle (giriş/çıkış/token yenileme)
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {

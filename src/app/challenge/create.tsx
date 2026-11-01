@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
+import { WheelField } from '@/components/ui/wheel-field';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useMySports, useSports } from '@/hooks/useSports';
@@ -81,32 +82,33 @@ export default function CreateChallengeScreen() {
       </View>
 
       <Text style={[styles.section, { color: c.text }]}>Hedef ({metric === 'workouts' ? 'antrenman' : 'aktif gün'})</Text>
-      <View style={styles.row}>
-        {GOALS.map((n) => (
-          <Chip key={n} label={`${n}`} selected={goal === n} onPress={() => setGoal(n)} />
-        ))}
-      </View>
+      <WheelField title="Hedef seç" icon="flag-outline" items={GOALS} value={goal} renderLabel={(n) => `${n}`} onChange={setGoal} />
 
       <Text style={[styles.section, { color: c.text }]}>Süre</Text>
-      <View style={styles.row}>
-        {DURATIONS.map((n) => (
-          <Chip key={n} label={`${n} gün`} selected={duration === n} onPress={() => setDuration(n)} />
-        ))}
-      </View>
+      <WheelField
+        title="Süre seç"
+        icon="calendar-outline"
+        items={DURATIONS}
+        value={duration}
+        renderLabel={(n) => `${n} gün`}
+        onChange={setDuration}
+      />
 
       {mySports.length ? (
         <>
           <Text style={[styles.section, { color: c.text }]}>Spor (isteğe bağlı)</Text>
-          <View style={styles.row}>
-            {mySports.map((s) => (
-              <Chip
-                key={s.id}
-                label={`${s.icon ?? ''} ${s.name}`.trim()}
-                selected={sportId === s.id}
-                onPress={() => setSportId(sportId === s.id ? null : s.id)}
-              />
-            ))}
-          </View>
+          <WheelField
+            title="Spor seç"
+            icon="basketball-outline"
+            items={[null, ...mySports.map((s) => s.id)]}
+            value={sportId}
+            renderLabel={(id) => {
+              if (id === null) return 'Seçilmedi';
+              const s = mySports.find((x) => x.id === id);
+              return s ? `${s.icon ?? ''} ${s.name}`.trim() : 'Seçilmedi';
+            }}
+            onChange={setSportId}
+          />
         </>
       ) : null}
 
