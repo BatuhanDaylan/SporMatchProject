@@ -25,7 +25,7 @@ export default function ProScreen() {
   const { isPro, proUntil } = usePro();
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'SporMatch Pro' }} />
 
       <View style={styles.hero}>

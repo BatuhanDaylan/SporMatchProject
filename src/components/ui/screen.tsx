@@ -12,10 +12,12 @@ type Props = {
   center?: boolean;
   /** Kayan (floating) sekme çubuğunun altında kalan ekranlarda içerik boşluğu bırakır. */
   floatingTabBar?: boolean;
+  /** Native başlık çubuğu varsa üst güvenli alanı tekrar ekleme (çift boşluk olmasın). */
+  hasHeader?: boolean;
 };
 
 /** Tema arka planlı, güvenli-alan destekli sayfa sarmalayıcı. */
-export function Screen({ children, scroll = false, center = false, floatingTabBar = false }: Props) {
+export function Screen({ children, scroll = false, center = false, floatingTabBar = false, hasHeader = false }: Props) {
   const c = useColors();
   const extraBottom = floatingTabBar ? { paddingBottom: BottomTabInset } : null;
   const inner = (
@@ -23,7 +25,7 @@ export function Screen({ children, scroll = false, center = false, floatingTabBa
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={hasHeader ? ['bottom'] : ['top', 'bottom']}>
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.scrollContent, center && styles.center]}

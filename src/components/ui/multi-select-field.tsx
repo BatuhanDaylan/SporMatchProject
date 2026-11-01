@@ -45,10 +45,13 @@ export function MultiSelectField<T>({ label, title, icon, items, values, getKey,
 
   function summary(): string {
     if (values.size === 0) return 'Seçilmedi';
-    if (values.size === 1) {
-      const key = [...values][0];
-      const item = items.find((i) => getKey(i) === key);
-      return item ? renderLabel(item) : `${values.size} seçili`;
+    if (values.size <= 2) {
+      // Az seçimde isimleri göster ("Koşu, Futbol"); çoksa sayı.
+      const names = [...values]
+        .map((key) => items.find((i) => getKey(i) === key))
+        .filter((item): item is T => item !== undefined)
+        .map(renderLabel);
+      if (names.length === values.size) return names.join(', ');
     }
     return `${values.size} seçili`;
   }

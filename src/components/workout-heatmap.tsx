@@ -90,67 +90,80 @@ export function WorkoutHeatmap({ userId }: { userId?: string }) {
         </Text>
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ flexGrow: 0, flexShrink: 0 }}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
-        <View>
-          {/* Ay etiketleri */}
-          <View style={{ flexDirection: 'row', height: 14, marginBottom: 2 }}>
-            {columns.map((_, i) => {
-              const label = monthLabels.find((l) => l.col === i);
-              return (
-                <View key={i} style={{ width: CELL + GAP }}>
-                  {label ? <Text style={{ color: c.textSecondary, fontSize: 9 }}>{label.text}</Text> : null}
+      {!isLoading && total === 0 ? (
+        <Text style={{ color: c.textSecondary, fontSize: 13 }}>
+          Henüz antrenman kaydın yok. İlk antrenmanını kaydedince etkinlik haritan burada dolar.
+        </Text>
+      ) : (
+        <>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0, flexShrink: 0 }}
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
+          <View>
+            {/* Ay etiketleri */}
+            <View style={{ flexDirection: 'row', height: 14, marginBottom: 2 }}>
+              {columns.map((_, i) => {
+                const label = monthLabels.find((l) => l.col === i);
+                return (
+                  <View key={i} style={{ width: CELL + GAP }}>
+                    {label ? (
+                      // Sütundan geniş: alt satıra sarılıp kesilmesin ("Tem" → "Te").
+                      <Text numberOfLines={1} style={{ color: c.textSecondary, fontSize: 9, width: 30 }}>
+                        {label.text}
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
+            {/* Hücreler */}
+            <View style={{ flexDirection: 'row' }}>
+              {columns.map((week, wi) => (
+                <View key={wi} style={{ marginRight: GAP }}>
+                  {week.map((cell, di) => {
+                    const future = cell.count < 0;
+                    return (
+                      <View
+                        key={di}
+                        style={{
+                          width: CELL,
+                          height: CELL,
+                          borderRadius: 3,
+                          marginBottom: GAP,
+                          backgroundColor: cellColor(cell.lvl, future),
+                          opacity: future ? 0 : cellOpacity(cell.lvl),
+                        }}
+                      />
+                    );
+                  })}
                 </View>
-              );
-            })}
+              ))}
+            </View>
           </View>
-          {/* Hücreler */}
-          <View style={{ flexDirection: 'row' }}>
-            {columns.map((week, wi) => (
-              <View key={wi} style={{ marginRight: GAP }}>
-                {week.map((cell, di) => {
-                  const future = cell.count < 0;
-                  return (
-                    <View
-                      key={di}
-                      style={{
-                        width: CELL,
-                        height: CELL,
-                        borderRadius: 3,
-                        marginBottom: GAP,
-                        backgroundColor: cellColor(cell.lvl, future),
-                        opacity: future ? 0 : cellOpacity(cell.lvl),
-                      }}
-                    />
-                  );
-                })}
-              </View>
-            ))}
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
 
-      {/* Açıklama */}
-      <View style={styles.legend}>
-        <Text style={{ color: c.textSecondary, fontSize: 10 }}>Az</Text>
-        {[0, 1, 2, 3].map((l) => (
-          <View
-            key={l}
-            style={{
-              width: 11,
-              height: 11,
-              borderRadius: 2,
-              backgroundColor: l === 0 ? c.border : c.primary,
-              opacity: cellOpacity(l),
-            }}
-          />
-        ))}
-        <Text style={{ color: c.textSecondary, fontSize: 10 }}>Çok</Text>
-      </View>
+        {/* Açıklama */}
+        <View style={styles.legend}>
+          <Text style={{ color: c.textSecondary, fontSize: 10 }}>Az</Text>
+          {[0, 1, 2, 3].map((l) => (
+            <View
+              key={l}
+              style={{
+                width: 11,
+                height: 11,
+                borderRadius: 2,
+                backgroundColor: l === 0 ? c.border : c.primary,
+                opacity: cellOpacity(l),
+              }}
+            />
+          ))}
+          <Text style={{ color: c.textSecondary, fontSize: 10 }}>Çok</Text>
+        </View>
+        </>
+      )}
     </View>
   );
 }

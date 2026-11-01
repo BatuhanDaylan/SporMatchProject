@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { displayName } from '@/lib/displayName';
 import { AsyncState } from '@/components/ui/async-state';
 import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { useColors } from '@/hooks/useColors';
 import { useDiscoverPrograms, useFollowingFeed, type DiscoverProgram } from '@/hooks/useDiscover';
@@ -91,6 +92,10 @@ export default function DiscoverScreen() {
               programMode === 'following'
                 ? 'Takip ettiklerinin herkese açık programı yok.'
                 : 'Henüz herkese açık program yok. İlk paylaşan sen ol!',
+            action:
+              programMode === 'following' ? undefined : (
+                <Button title="Program oluştur" onPress={() => router.push('/program/edit')} />
+              ),
           }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.noGrow} contentContainerStyle={styles.row}>
             {(programs.data ?? []).slice(0, 8).map((p) => (
@@ -123,7 +128,12 @@ export default function DiscoverScreen() {
           isError={feed.isError}
           onRetry={feed.refetch}
           isEmpty={(feed.data?.length ?? 0) === 0}
-          empty={{ icon: 'newspaper-outline', title: 'Henüz gönderi yok', text: 'İlk paylaşımı sen yap.' }}>
+          empty={{
+            icon: 'newspaper-outline',
+            title: 'Henüz gönderi yok',
+            text: 'İlk paylaşımı sen yap.',
+            action: <Button title="Gönderi paylaş" onPress={() => router.push('/post/create')} />,
+          }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.noGrow} contentContainerStyle={styles.row}>
             {(feed.data ?? []).slice(0, 8).map((p) => (
               <PostPreview

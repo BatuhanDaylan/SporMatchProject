@@ -153,7 +153,7 @@ export default function ProgramEditScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: editing ? 'Programı Düzenle' : 'Yeni Program' }} />
       <TextField label="Program başlığı" placeholder="ör. Push Pull Legs" value={title} onChangeText={setTitle} />
       <TextField

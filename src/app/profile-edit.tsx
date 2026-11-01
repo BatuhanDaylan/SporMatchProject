@@ -117,7 +117,7 @@ export default function ProfileEditScreen() {
   const name = displayName || profile?.username || 'Sporcu';
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Profili Düzenle', presentation: 'modal' }} />
 
       {/* Avatar */}

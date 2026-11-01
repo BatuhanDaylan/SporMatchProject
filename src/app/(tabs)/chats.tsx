@@ -5,7 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { displayName } from '@/lib/displayName';
 import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { Loading } from '@/components/ui/loading';
 import { Screen } from '@/components/ui/screen';
@@ -81,12 +83,12 @@ export default function ChatsScreen() {
             />
           }
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="chatbubbles-outline" size={40} color={c.textSecondary} />
-              <Text style={{ color: c.textSecondary, textAlign: 'center' }}>
-                Henüz sohbetin yok. Bir profile gidip sohbet isteği gönder ya da biriyle eşleş.
-              </Text>
-            </View>
+            <EmptyState
+              icon="chatbubbles-outline"
+              title="Henüz sohbetin yok"
+              text="Biriyle eşleş ya da bir profile gidip sohbet isteği gönder."
+              action={<Button title="Eşleşmeye başla" onPress={() => router.push('/match')} />}
+            />
           }
           renderItem={({ item }) => (
             <ConversationRow conv={item} onPress={() => router.push(`/chat/${item.conversation_id}`)} />

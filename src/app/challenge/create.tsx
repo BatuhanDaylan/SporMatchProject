@@ -8,6 +8,7 @@ import { showAlert } from '@/store/alert';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
+import { FieldLabel } from '@/components/ui/field-label';
 import { TextField } from '@/components/ui/text-field';
 import { WheelField } from '@/components/ui/wheel-field';
 import { useColors } from '@/hooks/useColors';
@@ -69,23 +70,25 @@ export default function CreateChallengeScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Meydan okuma oluştur' }} />
 
       <TextField label="Başlık" placeholder="Örn. 7 günde 5 antrenman" value={title} onChangeText={setTitle} maxLength={120} />
 
-      <Text style={[styles.section, { color: c.text }]}>Ölçüt</Text>
-      <View style={styles.row}>
-        {METRICS.map((m) => (
-          <Chip key={m.id} label={m.label} selected={metric === m.id} onPress={() => setMetric(m.id)} />
-        ))}
-      </View>
+      <FieldLabel text="Ölçüt">
+        <View style={styles.row}>
+          {METRICS.map((m) => (
+            <Chip key={m.id} label={m.label} selected={metric === m.id} onPress={() => setMetric(m.id)} />
+          ))}
+        </View>
+      </FieldLabel>
 
-      <Text style={[styles.section, { color: c.text }]}>Hedef ({metric === 'workouts' ? 'antrenman' : 'aktif gün'})</Text>
-      <WheelField title="Hedef seç" icon="flag-outline" items={GOALS} value={goal} renderLabel={(n) => `${n}`} onChange={setGoal} />
-
-      <Text style={[styles.section, { color: c.text }]}>Süre</Text>
       <WheelField
+        label={`Hedef (${metric === 'workouts' ? 'antrenman' : 'aktif gün'})`}
+        title="Hedef seç" icon="flag-outline" items={GOALS} value={goal} renderLabel={(n) => `${n}`} onChange={setGoal} />
+
+      <WheelField
+        label="Süre"
         title="Süre seç"
         icon="calendar-outline"
         items={DURATIONS}
@@ -96,8 +99,8 @@ export default function CreateChallengeScreen() {
 
       {mySports.length ? (
         <>
-          <Text style={[styles.section, { color: c.text }]}>Spor (isteğe bağlı)</Text>
           <WheelField
+            label="Spor (isteğe bağlı)"
             title="Spor seç"
             icon="basketball-outline"
             items={[null, ...mySports.map((s) => s.id)]}
@@ -112,8 +115,8 @@ export default function CreateChallengeScreen() {
         </>
       ) : null}
 
-      <Text style={[styles.section, { color: c.text }]}>Açıklama (isteğe bağlı)</Text>
       <TextField
+        label="Açıklama (isteğe bağlı)"
         placeholder="Kurallar, motivasyon…"
         value={description}
         onChangeText={setDescription}

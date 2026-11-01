@@ -12,6 +12,7 @@ import { LocationPickerModal } from '@/components/location-picker-modal';
 import { MapView } from '@/components/map-view';
 import { PickerField } from '@/components/ui/picker-field';
 import { Screen } from '@/components/ui/screen';
+import { FieldLabel } from '@/components/ui/field-label';
 import { TextField } from '@/components/ui/text-field';
 import { TimeField } from '@/components/ui/time-field';
 import { WheelField } from '@/components/ui/wheel-field';
@@ -123,12 +124,11 @@ export default function CreateEventScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Etkinlik oluştur' }} />
 
       <TextField label="Başlık" placeholder="Örn. Sabah koşusu" value={title} onChangeText={setTitle} maxLength={120} />
 
-      <View style={{ height: Spacing.two }} />
       <TextField
         label="Buluşma yeri (isim)"
         placeholder="Örn. Maçka Parkı girişi"
@@ -137,13 +137,15 @@ export default function CreateEventScreen() {
         maxLength={160}
       />
 
-      <Text style={[styles.section, { color: c.text }]}>Spor</Text>
       {mySports.length === 0 ? (
-        <Text style={{ color: c.textSecondary, fontSize: 13 }}>
-          Profilinden spor eklersen burada seçebilirsin (isteğe bağlı).
-        </Text>
+        <FieldLabel text="Spor">
+          <Text style={{ color: c.textSecondary, fontSize: 13 }}>
+            Profilinden spor eklersen burada seçebilirsin (isteğe bağlı).
+          </Text>
+        </FieldLabel>
       ) : (
         <WheelField
+          label="Spor"
           title="Spor seç"
           icon="basketball-outline"
           items={[null, ...mySports.map((s) => s.id)]}
@@ -157,14 +159,12 @@ export default function CreateEventScreen() {
         />
       )}
 
-      <Text style={[styles.section, { color: c.text }]}>Gün</Text>
-      <CalendarField value={eventDate} onChange={setEventDate} />
+      <CalendarField label="Gün" value={eventDate} onChange={setEventDate} />
 
-      <Text style={[styles.section, { color: c.text }]}>Saat</Text>
-      <TimeField hour={hour} minute={minute} onChange={(h, m) => setTime({ hour: h, minute: m })} />
+      <TimeField label="Saat" hour={hour} minute={minute} onChange={(h, m) => setTime({ hour: h, minute: m })} />
 
-      <Text style={[styles.section, { color: c.text }]}>Kontenjan</Text>
       <WheelField
+        label="Kontenjan"
         title="Kontenjan seç"
         icon="people-outline"
         items={CAPACITIES}
@@ -173,8 +173,8 @@ export default function CreateEventScreen() {
         onChange={setCapacity}
       />
 
-      <Text style={[styles.section, { color: c.text }]}>Açıklama (isteğe bağlı)</Text>
       <TextField
+        label="Açıklama (isteğe bağlı)"
         placeholder="Seviye, ekipman, notlar…"
         value={description}
         onChangeText={setDescription}

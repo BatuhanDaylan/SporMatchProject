@@ -41,7 +41,7 @@ export default function EventsScreen() {
   const active = mode === 'city' ? city : mine;
 
   return (
-    <Screen>
+    <Screen hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Etkinlikler' }} />
 
       {/* Segment */}
