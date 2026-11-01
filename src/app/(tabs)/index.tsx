@@ -10,6 +10,7 @@ import { AsyncState } from '@/components/ui/async-state';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useDiscoverPrograms, useFollowingFeed, type DiscoverProgram } from '@/hooks/useDiscover';
 import { useFeed, type FeedPost } from '@/hooks/useFeed';
@@ -48,6 +49,7 @@ export default function DiscoverScreen() {
       </View>
 
       {/* Arama — ikon yerine davetkâr bir çubuk */}
+      <TourTarget id="kesfet.search">
       <Pressable
         onPress={() => router.push('/search')}
         style={[styles.searchBar, { backgroundColor: c.backgroundElement, borderColor: c.border }]}
@@ -56,9 +58,10 @@ export default function DiscoverScreen() {
         <Ionicons name="search" size={17} color={c.textSecondary} />
         <Text style={{ color: c.textSecondary, fontSize: 14 }}>Sporcu veya program ara…</Text>
       </Pressable>
+      </TourTarget>
 
       {/* Programlar rafı */}
-      <View style={{ gap: Spacing.two }}>
+      <TourTarget id="kesfet.programs" style={{ gap: Spacing.two }}>
         <View style={styles.sectionHead}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.sectionTitle, { color: c.text }]}>Programlar</Text>
@@ -127,15 +130,16 @@ export default function DiscoverScreen() {
             </ScrollView>
           ) : null}
         </AsyncState>
-      </View>
+      </TourTarget>
 
       {/* Akış rafı */}
-      <View style={{ gap: Spacing.two }}>
+      <TourTarget id="kesfet.feed" style={{ gap: Spacing.two }}>
         <View style={styles.sectionHead}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.sectionTitle, { color: c.text }]}>Akış</Text>
             <Text style={[styles.sectionSub, { color: c.textSecondary }]}>Sporcuların son paylaşımları</Text>
           </View>
+          <TourTarget id="kesfet.feed-all">
           <Pressable
             onPress={() => router.push('/feed')}
             hitSlop={6}
@@ -143,6 +147,7 @@ export default function DiscoverScreen() {
             accessibilityLabel="Tüm gönderileri gör">
             <Text style={{ color: c.primary, ...Type.label }}>Tümünü Gör</Text>
           </Pressable>
+          </TourTarget>
         </View>
 
         <AsyncState
@@ -168,7 +173,7 @@ export default function DiscoverScreen() {
             ))}
           </ScrollView>
         </AsyncState>
-      </View>
+      </TourTarget>
     </Screen>
   );
 }

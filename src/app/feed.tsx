@@ -80,7 +80,7 @@ export default function FeedScreen() {
         />
       </AsyncState>
 
-      <Fab icon="create-outline" size={24} onPress={() => router.push('/post/create')} accessibilityLabel="Gönderi oluştur" />
+      <Fab icon="create-outline" size={24} onPress={() => router.push('/post/create')} accessibilityLabel="Gönderi oluştur" tourId="feed.fab" />
     </Screen>
   );
 }

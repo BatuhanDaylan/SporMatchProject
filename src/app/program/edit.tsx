@@ -8,6 +8,7 @@ import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { WheelField } from '@/components/ui/wheel-field';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useProgram, useProgramMutations } from '@/hooks/usePrograms';
 import { useSports } from '@/hooks/useSports';
@@ -155,6 +156,7 @@ export default function ProgramEditScreen() {
   return (
     <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: editing ? 'Programı Düzenle' : 'Yeni Program' }} />
+      <TourTarget id="pedit.basics" style={{ gap: Spacing.three }}>
       <TextField label="Program başlığı" placeholder="ör. Push Pull Legs" value={title} onChangeText={setTitle} />
       <TextField
         label="Açıklama (opsiyonel)"
@@ -163,8 +165,10 @@ export default function ProgramEditScreen() {
         onChangeText={setDescription}
         multiline
       />
+      </TourTarget>
 
       {/* Spor */}
+      <TourTarget id="pedit.sport" style={{ gap: Spacing.three }}>
       <Text style={[styles.label, { color: c.textSecondary }]}>Spor (opsiyonel)</Text>
       <WheelField
         title="Spor seç"
@@ -184,6 +188,7 @@ export default function ProgramEditScreen() {
         <Chip label="Herkese açık" selected={isPublic} onPress={() => setIsPublic(true)} />
         <Chip label="Gizli" selected={!isPublic} onPress={() => setIsPublic(false)} />
       </View>
+      </TourTarget>
 
       <View style={styles.divider} />
 
@@ -222,15 +227,19 @@ export default function ProgramEditScreen() {
         </View>
       ))}
 
-      <Button title="+ Gün ekle" variant="secondary" onPress={addDay} />
+      <TourTarget id="pedit.addday">
+        <Button title="+ Gün ekle" variant="secondary" onPress={addDay} />
+      </TourTarget>
 
       {error ? <Text style={{ color: c.danger, marginTop: Spacing.two }}>{error}</Text> : null}
       <View style={{ height: Spacing.two }} />
-      <Button
-        title={editing ? 'Kaydet' : 'Oluştur'}
-        onPress={onSave}
-        loading={create.isPending || update.isPending}
-      />
+      <TourTarget id="pedit.submit">
+        <Button
+          title={editing ? 'Kaydet' : 'Oluştur'}
+          onPress={onSave}
+          loading={create.isPending || update.isPending}
+        />
+      </TourTarget>
       <View style={{ height: Spacing.six }} />
     </Screen>
   );

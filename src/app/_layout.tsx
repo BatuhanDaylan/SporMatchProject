@@ -8,6 +8,8 @@ import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { AlertHost } from '@/components/ui/alert-host';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { FeatureTour } from '@/components/tour/feature-tour';
+import { TourOverlay } from '@/components/tour/tour-overlay';
 import { queryClient } from '@/lib/queryClient';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
@@ -87,6 +89,8 @@ export default function RootLayout() {
             {/* Durum çubuğu simgeleri: koyu temada açık, açık temada koyu renk. */}
             <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
             <RootNavigator />
+            <FeatureTour />
+            <TourOverlay />
             <AlertHost />
           </ThemeProvider>
         </AuthProvider>

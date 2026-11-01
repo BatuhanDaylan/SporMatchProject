@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { IconButton } from '@/components/ui/icon-button';
 import { Screen } from '@/components/ui/screen';
 import { Segment } from '@/components/ui/segment';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useMyPrograms, type Program } from '@/hooks/usePrograms';
 import { useProfileStats } from '@/hooks/useProfileStats';
@@ -59,6 +60,7 @@ export default function ProgramsScreen() {
           </Text>
         </View>
         {mode === 'mine' ? (
+          <TourTarget id="programs.add">
           <IconButton
             icon="add"
             iconSize={24}
@@ -67,11 +69,13 @@ export default function ProgramsScreen() {
             onPress={() => router.push('/program/edit')}
             accessibilityLabel="Program oluştur"
           />
+          </TourTarget>
         ) : null}
       </View>
 
       {/* Özet — gerçek profil istatistikleri */}
       {stats ? (
+        <TourTarget id="programs.summary">
         <Card style={styles.summary}>
           <SummaryStat emoji="🔥" value={stats.streak} label="Gün seri" />
           <View style={[styles.summaryDivider, { backgroundColor: c.border }]} />
@@ -79,6 +83,7 @@ export default function ProgramsScreen() {
           <View style={[styles.summaryDivider, { backgroundColor: c.border }]} />
           <SummaryStat emoji="📋" value={stats.programs} label="Program" />
         </Card>
+        </TourTarget>
       ) : null}
 
       {/* İlerleme */}
@@ -88,16 +93,19 @@ export default function ProgramsScreen() {
           title="Liderlik"
           subtitle="Sıralamada yerini gör"
           onPress={() => router.push('/leaderboard')}
+          tourId="programs.leaderboard"
         />
         <ActionTile
           icon="flame-outline"
           title="Meydan okuma"
           subtitle="Hedef koy, yarış"
           onPress={() => router.push('/challenges')}
+          tourId="programs.challenges"
         />
       </View>
 
       {/* Programlarım / Kaydettiklerim */}
+      <TourTarget id="programs.list" style={{ flex: 1, gap: Spacing.three }}>
       <Segment value={mode} onChange={setMode} options={SEGMENT_OPTIONS} />
 
       <AsyncState
@@ -136,6 +144,7 @@ export default function ProgramsScreen() {
           />
         )}
       </AsyncState>
+      </TourTarget>
     </Screen>
   );
 }
@@ -156,14 +165,17 @@ function ActionTile({
   title,
   subtitle,
   onPress,
+  tourId,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle: string;
   onPress: () => void;
+  tourId?: string;
 }) {
   const c = useColors();
   return (
+    <TourTarget id={tourId ?? 'tile'} style={{ flex: 1 }}>
     <Card onPress={onPress} style={styles.tile} accessibilityRole="button" accessibilityLabel={`${title}, ${subtitle}`}>
       <View style={[styles.tileIcon, { backgroundColor: c.primary }]}>
         <Ionicons name={icon} size={18} color={c.onPrimary} />
@@ -177,6 +189,7 @@ function ActionTile({
         </Text>
       </View>
     </Card>
+    </TourTarget>
   );
 }
 
@@ -256,7 +269,7 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 22, fontWeight: '800' },
   summaryDivider: { width: 1, height: 40 },
   progressRow: { flexDirection: 'row', gap: Spacing.two },
-  tile: { flex: 1, padding: Spacing.three, gap: Spacing.two, borderRadius: 16 },
+  tile: { padding: Spacing.three, gap: Spacing.two, borderRadius: 16 },
   tileIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   card: {
     flexDirection: 'row',

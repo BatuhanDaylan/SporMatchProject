@@ -4,6 +4,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { showAlert } from '@/store/alert';
 
+import { TourTarget } from '@/components/tour/tour-target';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { useColors } from '@/hooks/useColors';
@@ -12,8 +13,13 @@ import { useModeration } from '@/hooks/useModeration';
 import { useAuth } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/errorMessage';
 import { useThemeStore, type ThemeMode } from '@/store/theme';
+import { useTourStore, type TourId } from '@/store/tour';
+import { TOUR_TITLES } from '@/components/tour/tours';
 import { Spacing } from '@/constants/theme';
 import { PRIVACY_URL, TERMS_URL } from '@/constants/legal';
+
+/** Ayarlar > Yardım'da listelenen turlar. */
+const HELP_TOURS: TourId[] = ['all', 'discover', 'match', 'program', 'chat', 'profile'];
 
 const THEME_OPTIONS: { id: ThemeMode; label: string }[] = [
   { id: 'system', label: 'Sistem' },
@@ -56,17 +62,34 @@ export default function SettingsScreen() {
       <Stack.Screen options={{ headerShown: true, title: 'Ayarlar' }} />
 
       {/* Tema */}
-      <View style={styles.section}>
+      <TourTarget id="settings.theme" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: c.text }]}>Görünüm</Text>
         <View style={styles.row}>
           {THEME_OPTIONS.map((o) => (
             <Chip key={o.id} label={o.label} selected={mode === o.id} onPress={() => setMode(o.id)} />
           ))}
         </View>
-      </View>
+      </TourTarget>
+
+      {/* Yardım — tanıtım turları */}
+      <TourTarget id="settings.help" style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>Yardım</Text>
+        {HELP_TOURS.map((id) => (
+          <NavRow
+            key={id}
+            icon={id === 'all' ? 'help-circle-outline' : 'compass-outline'}
+            label={TOUR_TITLES[id]}
+            c={c}
+            onPress={() => {
+              useTourStore.getState().start(id);
+              router.navigate('/');
+            }}
+          />
+        ))}
+      </TourTarget>
 
       {/* Güvenlik */}
-      <View style={styles.section}>
+      <TourTarget id="settings.safety" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: c.text }]}>Gizlilik & Güvenlik</Text>
         <NavRow
           icon="ban"
@@ -74,7 +97,7 @@ export default function SettingsScreen() {
           c={c}
           onPress={() => router.push('/blocked')}
         />
-      </View>
+      </TourTarget>
 
       {/* Yasal */}
       <View style={styles.section}>
@@ -107,7 +130,7 @@ export default function SettingsScreen() {
       ) : null}
 
       {/* Hesap */}
-      <View style={styles.section}>
+      <TourTarget id="settings.account" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: c.text }]}>Hesap</Text>
         <NavRow icon="log-out-outline" label="Çıkış yap" c={c} onPress={() => signOut()} />
         <NavRow
@@ -117,7 +140,7 @@ export default function SettingsScreen() {
           c={c}
           onPress={confirmDelete}
         />
-      </View>
+      </TourTarget>
     </Screen>
   );
 }

@@ -10,6 +10,7 @@ import { Fab } from '@/components/ui/fab';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
 import { Segment } from '@/components/ui/segment';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useChallenges, type ChallengeSummary } from '@/hooks/useChallenges';
 import { shortDate } from '@/lib/datetime';
@@ -34,7 +35,9 @@ export default function ChallengesScreen() {
     <Screen>
       <Stack.Screen options={{ headerShown: true, title: 'Meydan Okumalar' }} />
 
-      <Segment value={scope} onChange={setScope} options={SEGMENT_OPTIONS} />
+      <TourTarget id="challenges.tabs">
+        <Segment value={scope} onChange={setScope} options={SEGMENT_OPTIONS} />
+      </TourTarget>
 
       <AsyncState
         isLoading={q.isLoading}
@@ -56,7 +59,7 @@ export default function ChallengesScreen() {
         />
       </AsyncState>
 
-      <Fab icon="add" onPress={() => router.push('/challenge/create')} accessibilityLabel="Meydan okuma oluştur" />
+      <Fab icon="add" onPress={() => router.push('/challenge/create')} accessibilityLabel="Meydan okuma oluştur" tourId="challenges.fab" />
     </Screen>
   );
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useMySports, useSports } from '@/hooks/useSports';
@@ -133,7 +134,7 @@ export default function MatchScreen() {
       </View>
 
       {/* 1) Spor seçimi — tüm seçenekler görünür, dokununca işaretlenir */}
-      <View style={{ gap: Spacing.two }}>
+      <TourTarget id="match.sports" style={{ gap: Spacing.two }}>
         <View style={styles.stepHead}>
           <Text style={[styles.step, { color: c.text }]}>Ne yapmak istiyorsun?</Text>
           {mySports.length > 0 ? (
@@ -183,17 +184,17 @@ export default function MatchScreen() {
             })}
           </View>
         )}
-      </View>
+      </TourTarget>
 
       {/* 2) Mesafe */}
-      <View style={{ gap: Spacing.two }}>
+      <TourTarget id="match.radius" style={{ gap: Spacing.two }}>
         <Text style={[styles.step, { color: c.text }]}>Ne kadar uzakta?</Text>
         <View style={styles.radii}>
           {RADII.map((r) => (
             <Chip key={r} label={`${r} km`} selected={radiusKm === r} onPress={() => setRadiusKm(r)} />
           ))}
         </View>
-      </View>
+      </TourTarget>
 
       {limitHit ? (
         <View style={[styles.proCard, { backgroundColor: c.backgroundElement, borderColor: c.primary }]}>
@@ -217,7 +218,7 @@ export default function MatchScreen() {
       ) : null}
 
       {/* Ana aksiyon + özet */}
-      <View style={{ gap: Spacing.two }}>
+      <TourTarget id="match.start" style={{ gap: Spacing.two }}>
         <Button
           title="⚡ Eşleşmeyi Başlat"
           onPress={onStart}
@@ -235,9 +236,10 @@ export default function MatchScreen() {
             Tam konumun yalnızca iki taraf da onayladıktan sonra paylaşılır.
           </Text>
         </View>
-      </View>
+      </TourTarget>
 
       {/* İkincil: planlı etkinlikler */}
+      <TourTarget id="match.events">
       <Card
         onPress={() => router.push('/events')}
         style={styles.eventsCard}
@@ -254,6 +256,7 @@ export default function MatchScreen() {
         </View>
         <Ionicons name="chevron-forward" size={18} color={c.textSecondary} />
       </Card>
+      </TourTarget>
     </Screen>
   );
 }

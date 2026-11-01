@@ -16,6 +16,7 @@ import { FieldLabel } from '@/components/ui/field-label';
 import { TextField } from '@/components/ui/text-field';
 import { TimeField } from '@/components/ui/time-field';
 import { WheelField } from '@/components/ui/wheel-field';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useMySports, useSports } from '@/hooks/useSports';
@@ -127,6 +128,7 @@ export default function CreateEventScreen() {
     <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Etkinlik oluştur' }} />
 
+      <TourTarget id="event.basics" style={{ gap: Spacing.three }}>
       <TextField label="Başlık" placeholder="Örn. Sabah koşusu" value={title} onChangeText={setTitle} maxLength={120} />
 
       <TextField
@@ -136,7 +138,9 @@ export default function CreateEventScreen() {
         onChangeText={setPlaceName}
         maxLength={160}
       />
+      </TourTarget>
 
+      <TourTarget id="event.sport">
       {mySports.length === 0 ? (
         <FieldLabel text="Spor">
           <Text style={{ color: c.textSecondary, fontSize: 13 }}>
@@ -158,11 +162,15 @@ export default function CreateEventScreen() {
           onChange={setSportId}
         />
       )}
+      </TourTarget>
 
+      <TourTarget id="event.when" style={{ gap: Spacing.three }}>
       <CalendarField label="Gün" value={eventDate} onChange={setEventDate} />
 
       <TimeField label="Saat" hour={hour} minute={minute} onChange={(h, m) => setTime({ hour: h, minute: m })} />
+      </TourTarget>
 
+      <TourTarget id="event.capacity">
       <WheelField
         label="Kontenjan"
         title="Kontenjan seç"
@@ -172,6 +180,7 @@ export default function CreateEventScreen() {
         renderLabel={(n) => (n === null ? 'Sınırsız' : `${n} kişi`)}
         onChange={setCapacity}
       />
+      </TourTarget>
 
       <TextField
         label="Açıklama (isteğe bağlı)"
@@ -183,6 +192,7 @@ export default function CreateEventScreen() {
         maxLength={1000}
       />
 
+      <TourTarget id="event.city">
       <Text style={[styles.section, { color: c.text }]}>Şehir</Text>
       <View style={{ gap: Spacing.two }}>
         <PickerField
@@ -205,7 +215,9 @@ export default function CreateEventScreen() {
           disabledHint="Önce il seç"
         />
       </View>
+      </TourTarget>
 
+      <TourTarget id="event.map" style={{ gap: Spacing.three }}>
       <Text style={[styles.section, { color: c.text }]}>Buluşma noktası</Text>
       {coords ? (
         <>
@@ -230,6 +242,7 @@ export default function CreateEventScreen() {
           <Text style={{ color: c.textSecondary, fontSize: 12 }}>Ara, dokun ya da işareti sürükle</Text>
         </Pressable>
       )}
+      </TourTarget>
 
       <View style={[styles.hint, { backgroundColor: c.backgroundElement }]}>
         <Ionicons name="information-circle-outline" size={16} color={c.textSecondary} />
@@ -247,7 +260,9 @@ export default function CreateEventScreen() {
       />
 
       <View style={{ height: Spacing.three }} />
-      <Button title="Etkinliği oluştur" onPress={onCreate} loading={create.isPending} />
+      <TourTarget id="event.submit">
+        <Button title="Etkinliği oluştur" onPress={onCreate} loading={create.isPending} />
+      </TourTarget>
       <View style={{ height: Spacing.four }} />
     </Screen>
   );

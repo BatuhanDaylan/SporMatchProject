@@ -4,6 +4,7 @@ import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 
 type TabBarProps = NonNullable<ComponentProps<typeof Tabs>['tabBar']> extends (props: infer P) => unknown
@@ -17,7 +18,8 @@ function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) {
 
   return (
     <View style={[styles.wrap, { bottom: insets.bottom + 12 }]} pointerEvents="box-none">
-      <View
+      <TourTarget
+        id="tabbar"
         style={[
           styles.bar,
           {
@@ -38,8 +40,8 @@ function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) {
           }
 
           return (
+            <TourTarget key={route.key} id={`tab.${route.name}`} style={styles.itemWrap}>
             <Pressable
-              key={route.key}
               onPress={onPress}
               style={styles.item}
               accessibilityRole="button"
@@ -50,9 +52,10 @@ function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) {
                 {label}
               </Text>
             </Pressable>
+            </TourTarget>
           );
         })}
-      </View>
+      </TourTarget>
     </View>
   );
 }
@@ -119,6 +122,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
   },
+  itemWrap: { flex: 1 },
   item: { alignItems: 'center', justifyContent: 'center', gap: 2, flex: 1 },
   label: { fontSize: 11, fontWeight: '600' },
 });

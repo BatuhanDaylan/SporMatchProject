@@ -13,6 +13,7 @@ import { Fab } from '@/components/ui/fab';
 import { PickerField } from '@/components/ui/picker-field';
 import { Screen } from '@/components/ui/screen';
 import { Segment } from '@/components/ui/segment';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useCityEvents, useMyEvents, type CityEvent, type MyEvent } from '@/hooks/useEvents';
@@ -45,11 +46,13 @@ export default function EventsScreen() {
       <Stack.Screen options={{ headerShown: true, title: 'Etkinlikler' }} />
 
       {/* Segment */}
-      <Segment value={mode} onChange={setMode} options={SEGMENT_OPTIONS} />
+      <TourTarget id="events.tabs">
+        <Segment value={mode} onChange={setMode} options={SEGMENT_OPTIONS} />
+      </TourTarget>
 
       {/* İl seçici (yalnız Şehrimde) */}
       {mode === 'city' ? (
-        <View style={{ marginBottom: Spacing.two }}>
+        <TourTarget id="events.city" style={{ marginBottom: Spacing.two }}>
           <PickerField
             label="İl"
             value={shownProvince}
@@ -57,7 +60,7 @@ export default function EventsScreen() {
             options={PROVINCES}
             onChange={(p) => setProvince(p)}
           />
-        </View>
+        </TourTarget>
       ) : null}
 
       {mode === 'city' && !shownProvince ? (
@@ -103,7 +106,7 @@ export default function EventsScreen() {
       )}
 
       {/* Oluştur FAB */}
-      <Fab icon="add" onPress={() => router.push('/event/create')} accessibilityLabel="Etkinlik oluştur" />
+      <Fab icon="add" onPress={() => router.push('/event/create')} accessibilityLabel="Etkinlik oluştur" tourId="events.fab" />
     </Screen>
   );
 }

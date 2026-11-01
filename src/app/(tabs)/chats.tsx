@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { Loading } from '@/components/ui/loading';
 import { Screen } from '@/components/ui/screen';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useChatRequests, type ChatRequest } from '@/hooks/useChatRequests';
 import { useConversations, type Conversation } from '@/hooks/useChat';
@@ -30,7 +31,7 @@ export default function ChatsScreen() {
   const totalUnread = (data ?? []).reduce((n, conv) => n + conv.unread, 0);
 
   const Title = (
-    <View style={styles.titleRow}>
+    <TourTarget id="chats.header" style={styles.titleRow}>
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: c.text }]}>Sohbet</Text>
         <Text style={[styles.subtitle, { color: c.textSecondary }]}>Eşleştiğin sporcularla yaz.</Text>
@@ -40,7 +41,7 @@ export default function ChatsScreen() {
           <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '800' }}>{totalUnread} yeni</Text>
         </View>
       ) : null}
-    </View>
+    </TourTarget>
   );
 
   const Header = (
@@ -88,6 +89,7 @@ export default function ChatsScreen() {
           <Loading />
         </>
       ) : (
+        <TourTarget id="chats.body" style={{ flex: 1 }}>
         <FlatList
           data={data}
           keyExtractor={(x) => x.conversation_id}
@@ -115,6 +117,7 @@ export default function ChatsScreen() {
             <ConversationRow conv={item} onPress={() => router.push(`/chat/${item.conversation_id}`)} />
           )}
         />
+        </TourTarget>
       )}
     </Screen>
   );

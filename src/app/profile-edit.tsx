@@ -3,6 +3,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { TourTarget } from '@/components/tour/tour-target';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { MultiSelectField } from '@/components/ui/multi-select-field';
@@ -120,6 +121,7 @@ export default function ProfileEditScreen() {
     <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Profili Düzenle', presentation: 'modal' }} />
 
+      <TourTarget id="pe.basics" style={{ gap: Spacing.three }}>
       {/* Avatar */}
       <View style={styles.avatarWrap}>
         <Pressable onPress={onPickAvatar} disabled={uploading}>
@@ -166,7 +168,9 @@ export default function ProfileEditScreen() {
           multiline
         />
       </View>
+      </TourTarget>
 
+      <TourTarget id="pe.level">
       <WheelField
         label="Seviye"
         title="Seviye seç"
@@ -176,7 +180,9 @@ export default function ProfileEditScreen() {
         renderLabel={(id) => (id === null ? 'Seçilmedi' : LEVELS.find((l) => l.id === id)?.label ?? 'Seçilmedi')}
         onChange={setLevel}
       />
+      </TourTarget>
 
+      <TourTarget id="pe.lists" style={{ gap: Spacing.three }}>
       <MultiSelectField
         label="Hedefler"
         title="Hedefleri seç"
@@ -209,12 +215,13 @@ export default function ProfileEditScreen() {
         renderLabel={(s) => `${s.icon ?? ''} ${s.name}`.trim()}
         onChange={setSelected}
       />
+      </TourTarget>
 
       {error ? <Text style={{ color: c.danger }}>{error}</Text> : null}
 
-      <View style={{ marginTop: Spacing.two }}>
+      <TourTarget id="pe.save" style={{ marginTop: Spacing.two }}>
         <Button title="Kaydet" size="lg" loading={save.isPending} onPress={() => save.mutate()} />
-      </View>
+      </TourTarget>
       <View style={{ height: Spacing.four }} />
     </Screen>
   );

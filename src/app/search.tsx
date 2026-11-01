@@ -7,6 +7,7 @@ import { displayName } from '@/lib/displayName';
 import { Loading } from '@/components/ui/loading';
 import { PersonRow } from '@/components/ui/person-row';
 import { Screen } from '@/components/ui/screen';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useSearch } from '@/hooks/useSearch';
 import { Spacing } from '@/constants/theme';
@@ -27,7 +28,7 @@ export default function SearchScreen() {
     <Screen>
       <Stack.Screen options={{ headerShown: true, title: 'Ara' }} />
 
-      <View style={[styles.searchBar, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+      <TourTarget id="search.input" style={[styles.searchBar, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
         <Ionicons name="search" size={18} color={c.textSecondary} />
         <TextInput
           placeholder="Sporcu veya program ara…"
@@ -43,7 +44,7 @@ export default function SearchScreen() {
             <Ionicons name="close-circle" size={18} color={c.textSecondary} />
           </Pressable>
         ) : null}
-      </View>
+      </TourTarget>
 
       {short ? (
         <Text style={{ color: c.textSecondary, marginTop: Spacing.two }}>

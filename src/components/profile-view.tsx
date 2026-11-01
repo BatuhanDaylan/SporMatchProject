@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { Avatar } from '@/components/ui/avatar';
 import { WorkoutHeatmap } from '@/components/workout-heatmap';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import type { ProfileStats } from '@/hooks/useProfileStats';
 import { BADGES, type BadgeState } from '@/lib/badges';
@@ -68,7 +69,7 @@ export function ProfileView({
   return (
     <>
       {/* Başlık kartı */}
-      <View style={[styles.card, styles.headerCard, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+      <TourTarget id="profile.card" style={[styles.card, styles.headerCard, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
         <View style={styles.identity}>
           <Avatar name={name} url={avatarUrl ?? null} size={80} />
           <View style={{ flex: 1, gap: 2 }}>
@@ -108,10 +109,10 @@ export function ProfileView({
         ) : null}
 
         {headerAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
-      </View>
+      </TourTarget>
 
       {/* İstatistikler */}
-      <View style={[styles.card, styles.statsCard, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+      <TourTarget id="profile.stats" style={[styles.card, styles.statsCard, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
         {statsLoading || !stats ? (
           <ActivityIndicator style={{ flex: 1, paddingVertical: Spacing.two }} />
         ) : (
@@ -129,8 +130,9 @@ export function ProfileView({
             </View>
           ))
         )}
-      </View>
+      </TourTarget>
 
+      <TourTarget id="profile.sports" style={{ gap: Spacing.three }}>
       {goals?.length ? (
         <Section title="Hedefler" c={c}>
           <TagRow items={goals} c={c} />
@@ -150,16 +152,18 @@ export function ProfileView({
           <Text style={{ color: c.textSecondary }}>Henüz spor seçilmedi.</Text>
         )}
       </Section>
+      </TourTarget>
 
       {/* Antrenman ısı-haritası */}
       {userId ? (
-        <View style={[styles.card, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+        <TourTarget id="profile.heatmap" style={[styles.card, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
           <WorkoutHeatmap userId={userId} />
-        </View>
+        </TourTarget>
       ) : null}
 
       {/* Rozetler */}
       {badges.length ? (
+        <TourTarget id="profile.badges">
         <Section title="Rozetler" trailing={`${earnedCount}/${BADGES.length}`} onPress={onOpenBadges} c={c}>
           <ScrollView
             horizontal
@@ -181,6 +185,7 @@ export function ProfileView({
             ))}
           </ScrollView>
         </Section>
+        </TourTarget>
       ) : null}
 
       {footer}

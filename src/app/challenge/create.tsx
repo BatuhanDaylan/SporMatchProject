@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/screen';
 import { FieldLabel } from '@/components/ui/field-label';
 import { TextField } from '@/components/ui/text-field';
 import { WheelField } from '@/components/ui/wheel-field';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useMySports, useSports } from '@/hooks/useSports';
@@ -73,6 +74,7 @@ export default function CreateChallengeScreen() {
     <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Meydan okuma oluştur' }} />
 
+      <TourTarget id="ccreate.basics" style={{ gap: Spacing.three }}>
       <TextField label="Başlık" placeholder="Örn. 7 günde 5 antrenman" value={title} onChangeText={setTitle} maxLength={120} />
 
       <FieldLabel text="Ölçüt">
@@ -82,7 +84,9 @@ export default function CreateChallengeScreen() {
           ))}
         </View>
       </FieldLabel>
+      </TourTarget>
 
+      <TourTarget id="ccreate.goal" style={{ gap: Spacing.three }}>
       <WheelField
         label={`Hedef (${metric === 'workouts' ? 'antrenman' : 'aktif gün'})`}
         title="Hedef seç" icon="flag-outline" items={GOALS} value={goal} renderLabel={(n) => `${n}`} onChange={setGoal} />
@@ -96,6 +100,7 @@ export default function CreateChallengeScreen() {
         renderLabel={(n) => `${n} gün`}
         onChange={setDuration}
       />
+      </TourTarget>
 
       {mySports.length ? (
         <>
@@ -133,7 +138,9 @@ export default function CreateChallengeScreen() {
       </View>
 
       <View style={{ height: Spacing.three }} />
-      <Button title="Meydan okumayı başlat" onPress={onCreate} loading={create.isPending} />
+      <TourTarget id="ccreate.submit">
+        <Button title="Meydan okumayı başlat" onPress={onCreate} loading={create.isPending} />
+      </TourTarget>
       <View style={{ height: Spacing.four }} />
     </Screen>
   );

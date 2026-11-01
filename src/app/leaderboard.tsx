@@ -8,6 +8,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Segment } from '@/components/ui/segment';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import {
   useLeaderboard,
@@ -53,7 +54,9 @@ export default function LeaderboardScreen() {
         <Text style={{ color: c.textSecondary, fontSize: 18 }}>›</Text>
       </Card>
 
-      <Segment value={scope} onChange={setScope} options={SEGMENT_OPTIONS} />
+      <TourTarget id="leaderboard.scope">
+        <Segment value={scope} onChange={setScope} options={SEGMENT_OPTIONS} />
+      </TourTarget>
 
       <AsyncState
         isLoading={isLoading}

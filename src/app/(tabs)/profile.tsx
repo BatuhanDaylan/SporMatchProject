@@ -10,6 +10,7 @@ import { ProfileView } from '@/components/profile-view';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Screen } from '@/components/ui/screen';
+import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useFollow } from '@/hooks/useFollow';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -62,6 +63,7 @@ export default function ProfileScreen() {
     <Screen scroll floatingTabBar>
       <View style={styles.header}>
         <Text style={[styles.title, { color: c.text }]}>Profil</Text>
+        <TourTarget id="profile.bell">
         <IconButton
           icon="notifications-outline"
           iconColor={c.text}
@@ -74,6 +76,7 @@ export default function ProfileScreen() {
             </View>
           ) : null}
         </IconButton>
+        </TourTarget>
       </View>
 
       <ProfileView
@@ -97,6 +100,7 @@ export default function ProfileScreen() {
         footer={
           <>
             {!isPro ? (
+              <TourTarget id="profile.pro">
               <Pressable
                 onPress={() => router.push('/pro')}
                 style={({ pressed }) => [
@@ -109,11 +113,13 @@ export default function ProfileScreen() {
                 </Text>
                 <Ionicons name="chevron-forward" size={18} color={c.textSecondary} />
               </Pressable>
+              </TourTarget>
             ) : null}
-            <View style={{ marginTop: Spacing.two }}>
+            <TourTarget id="profile.edit" style={{ marginTop: Spacing.two }}>
               <Button title="Profili Düzenle" size="lg" onPress={() => router.push('/profile-edit')} />
-            </View>
+            </TourTarget>
             <View style={styles.footerRow}>
+              <TourTarget id="profile.settings" style={{ flex: 1 }}>
               <Pressable
                 onPress={() => router.push('/settings')}
                 accessibilityRole="button"
@@ -124,6 +130,7 @@ export default function ProfileScreen() {
                 <Ionicons name="settings-outline" size={18} color={c.text} />
                 <Text style={{ color: c.text, fontWeight: '600', fontSize: 15 }}>Ayarlar</Text>
               </Pressable>
+              </TourTarget>
               <Pressable
                 onPress={confirmSignOut}
                 accessibilityRole="button"
