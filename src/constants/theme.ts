@@ -16,19 +16,21 @@ export const Colors = {
     textSecondary: '#616774',
     // Vurgu: sıcak turuncu-kırmızı (Strava tarzı, uygulamadaki 🔥 seri/hit/meydan-okuma
     // motifiyle tematik olarak örtüşüyor — jenerik "AI mavisi" #2563EB'nin yerine).
-    primary: '#F0501A',
+    // Açık zeminde WCAG normal-metin eşiği (4,5:1) için vurgu/durum renkleri koyulaştırıldı
+    // (eski #F0501A / #E5484D / #30A46C ile beyaz yazı 3,2–3,9:1 idi). Koyu tema etkilenmez.
+    primary: '#C2410C', // beyaz yazı 5,18:1 · zemin üstünde link 4,57:1
     onPrimary: '#FFFFFF',
     border: '#E2E6EC',
-    danger: '#E5484D',
+    danger: '#C7343A', // beyaz yazı 5,28:1 · zemin üstünde metin 4,66:1
     onDanger: '#FFFFFF',
-    success: '#30A46C',
+    success: '#1F8050', // beyaz yazı 4,93:1
     onSuccess: '#FFFFFF',
     // Alt menü (tab bar) — diğer kartlarla aynı yüzey rengi (beyaz + ince kenarlık),
     // koyu lacivert yerine uygulamanın geri kalanıyla uyumlu; aktif ikon turuncu vurgu.
     tabBar: '#FFFFFF',
     tabBarBorder: '#E2E6EC',
-    tabBarActive: '#F0501A',
-    tabBarInactive: '#94A3B8',
+    tabBarActive: '#C2410C',
+    tabBarInactive: '#64748B', // sekme çubuğu (beyaz) üstünde 4,76:1 (eski #94A3B8 = 2,56:1)
   },
   dark: {
     text: '#F4F6FA',
