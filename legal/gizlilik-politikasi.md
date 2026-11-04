@@ -1,8 +1,8 @@
 # SporMatch — Gizlilik Politikası
 
-**Son güncelleme:** 13 Ağustos 2026
+**Son güncelleme:** 4 Kasım 2026
 **Veri sorumlusu:** SporMatch (geliştirici: Batuhan Daylan)
-**İletişim:** [destek e-posta adresini buraya yaz — örn. destek@spormatch.app]
+**İletişim:** batuhandaylan5@gmail.com
 
 Bu politika, SporMatch mobil uygulamasını ("Uygulama") kullandığında hangi kişisel verilerini
 işlediğimizi, nasıl kullandığımızı ve haklarını açıklar. Uygulamayı kullanarak bu politikayı
@@ -17,7 +17,7 @@ kabul etmiş olursun.
   - **Kesin konum (koordinat):** yalnızca **eşleşme aktivitesini başlattığında** alınır ve
     eşleşme havuzunda mesafe hesaplamak için kullanılır. Kesin konumun **yalnızca karşılıklı
     onaydan sonra** eşleştiğin kişiyle paylaşılır; onaydan önce yalnızca **mesafe** gösterilir.
-- **İçerik:** oluşturduğun antrenman programları, antrenman kayıtların, yorumlar, mesajlar,
+- **İçerik:** oluşturduğun antrenman programları, antrenman kayıtların, gönderiler ve gönderi fotoğrafları, yorumlar, mesajlar,
   beğeni/kaydetme, takip ilişkileri.
 - **Cihaz/teknik:** bildirim (push) jetonu, platform bilgisi, uygulama içi kullanım kayıtları.
 - **Güvenlik:** engellediğin kullanıcılar, gönderdiğin şikayetler.
@@ -49,12 +49,12 @@ Veriler AB (İrlanda) bölgesindeki sunucularda barındırılır. Türkiye dış
 ## 6. Saklama ve silme
 - Verilerini hesabın aktif olduğu sürece saklarız.
 - **Hesabını silebilirsin:** Uygulama içinde **Ayarlar → Hesabı sil** ile hesabın ve ilişkili tüm
-  verilerin (programlar, kayıtlar, mesajlar, eşleşmeler) kalıcı olarak silinir.
-- Silme talebini ayrıca [destek e-posta adresi] üzerinden de iletebilirsin.
+  verilerin (programlar, kayıtlar, mesajlar, eşleşmeler, yüklediğin fotoğraflar) kalıcı olarak silinir.
+- Silme talebini ayrıca batuhandaylan5@gmail.com üzerinden de iletebilirsin.
 
 ## 7. Haklarına (KVKK m.11 / GDPR)
 Verilerine erişme, düzeltme, silme, işlenmesine itiraz etme ve taşınabilirlik haklarına sahipsin.
-Talepler için: [destek e-posta adresi].
+Talepler için: batuhandaylan5@gmail.com.
 
 ## 8. Yaş sınırı
 SporMatch **18 yaş ve üzeri** kullanıcılar içindir. 18 yaşından küçüklerin bilerek verisini işlemeyiz.
@@ -67,4 +67,4 @@ gibi teknik ve idari önlemler alırız. Hiçbir sistem %100 güvenli değildir.
 Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişiklikleri uygulama içinde bildiririz.
 
 ## 11. İletişim
-Sorular ve talepler için: **[destek e-posta adresi]**
+Sorular ve talepler için: **batuhandaylan5@gmail.com**

@@ -4,6 +4,19 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import type { Json } from '@/types/database';
 
+/** Kullanıcının storage klasörlerindeki (avatars, post-images) tüm dosyaları siler. Hesap silmeyi engellemez. */
+async function removeOwnFiles(userId: string) {
+  for (const bucket of ['avatars', 'post-images']) {
+    try {
+      const { data } = await supabase.storage.from(bucket).list(userId, { limit: 1000 });
+      const paths = (data ?? []).map((f) => `${userId}/${f.name}`);
+      if (paths.length) await supabase.storage.from(bucket).remove(paths);
+    } catch {
+      // dosya temizliği başarısız olsa da hesap silinsin
+    }
+  }
+}
+
 /** Belirli bir kullanıcıyı engelledim mi? */
 export function useIsBlocked(userId?: string) {
   const { user } = useAuth();
@@ -102,6 +115,9 @@ export function useModeration() {
 
   const deleteAccount = useMutation({
     mutationFn: async () => {
+      // Önce yüklenen dosyalar (RPC yalnız DB satırlarını siler; dosyalar storage'da kalırdı).
+      const { data: sess } = await supabase.auth.getSession();
+      if (sess.session) await removeOwnFiles(sess.session.user.id);
       const { error } = await supabase.rpc('delete_my_account');
       if (error) throw error;
     },
