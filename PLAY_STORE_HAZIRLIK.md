@@ -12,7 +12,7 @@ Console hesabı). Bu dosya sırayla ne yapman gerektiğini ve hazır metinleri i
   eklendi (uygulama yalnız galeriden fotoğraf seçiyor, kamera/mikrofon hiç kullanılmıyor)
 - **İnceleme (reviewer) test hesabı** oluşturuldu ve e-postası onaylandı:
   - E-posta: `playstore.reviewer@spormatch.app`
-  - Şifre: `PlayReview2026!`
+  - Şifre: repoda tutulmuyor; yalnızca Play Console → App access alanında ve geliştiricide.
   - Bu bilgileri Play Console'da **App content → App access** bölümüne gireceksin (Adım 6).
 
 ---
@@ -141,7 +141,7 @@ Beklenen sonuç: **PEGI 12 / Teen** civarı bir derecelendirme (kesin sonucu ank
 "Uygulamanın tamamına erişim login gerektiriyor mu?" sorusuna **Evet** de ve reviewer bilgilerini gir:
 ```
 E-posta: playstore.reviewer@spormatch.app
-Şifre:   PlayReview2026!
+Şifre:   (Console'a geliştirici girer; repoya yazılmaz)
 ```
 Ek not alanına (varsa) şunu ekleyebilirsin: "Hesap normal kayıt akışıyla oluşturuldu ve e-postası
 önceden onaylandı, doğrudan giriş yapılabilir."
