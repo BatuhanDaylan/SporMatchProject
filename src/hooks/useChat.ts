@@ -14,6 +14,10 @@ export type Conversation = {
   partner_avatar: string | null;
   last_message: string | null;
   last_at: string | null;
+  /** Son mesajı ben mi attım? (✓ / ✓✓ göstermek için) */
+  last_from_me?: boolean | null;
+  /** Son mesaj karşı tarafça okundu mu? */
+  last_read?: boolean | null;
   unread: number;
 };
 
@@ -26,16 +30,38 @@ export type Message = {
   created_at: string;
 };
 
+export async function fetchConversations() {
+  const { data, error } = await supabase.rpc('list_conversations');
+  if (error) throw error;
+  return (data as unknown as Conversation[]) ?? [];
+}
+
+/** Sohbet listesi, realtime kanalı OLMADAN (tek sohbet ekranı karşı tarafı bulmak için). */
+export function useConversationList() {
+  return useQuery({ queryKey: ['conversations'], queryFn: fetchConversations, staleTime: 30_000 });
+}
+
+/** Sohbeti yalnız kendi tarafımda sil (karşı taraf etkilenmez). */
+export function useDeleteConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { error } = await supabase.rpc('delete_conversation', { p_conversation_id: conversationId });
+      if (error) throw error;
+    },
+    onSuccess: (_d, conversationId) => {
+      qc.removeQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
 /** Kullanıcının sohbet listesi (partner + son mesaj + okunmamış). */
 export function useConversations() {
   const qc = useQueryClient();
   const query = useQuery({
     queryKey: ['conversations'],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('list_conversations');
-      if (error) throw error;
-      return (data as unknown as Conversation[]) ?? [];
-    },
+    queryFn: fetchConversations,
   });
 
   // Herhangi bir mesaj değişiminde listeyi tazele (RLS zaten sınırlar)
@@ -87,7 +113,16 @@ export function useMessages(conversationId?: string) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-        () => qc.invalidateQueries({ queryKey }),
+        (payload) => {
+          qc.invalidateQueries({ queryKey });
+          // Sohbet açıkken karşı taraftan gelen yeni mesaj hemen okundu işaretlenir (✓✓ onun tarafında görünsün)
+          const row = payload.new as Partial<Message> | undefined;
+          if (payload.eventType === 'INSERT' && row?.sender_id && row.sender_id !== user?.id) {
+            supabase.rpc('mark_conversation_read', { p_conversation_id: conversationId }).then(() => {
+              qc.invalidateQueries({ queryKey: ['conversations'] });
+            });
+          }
+        },
       )
       .subscribe();
     return () => {

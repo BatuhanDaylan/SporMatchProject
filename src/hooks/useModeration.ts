@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/errorMessage';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/store/alert';
+import { reportKey, useReportedStore } from '@/store/reported';
 import type { Json } from '@/types/database';
 
 /** Kullanıcının storage klasörlerindeki (avatars, post-images) tüm dosyaları siler. Hesap silmeyi engellemez. */
@@ -113,6 +116,32 @@ export function useModeration() {
     },
   });
 
+  /**
+   * Şikayeti gönderir ve SONUCU bildirir: yalnızca gerçekten kaydedilince "Teşekkürler" der;
+   * sunucu hatası (ör. "Bunu zaten şikayet ettin", saatlik limit) kullanıcıya olduğu gibi gösterilir.
+   */
+  async function sendReport(
+    args: { userId: string; reason: string; context: Record<string, unknown> },
+    type: string,
+    targetId: string,
+    thanks = 'Şikayetin alındı.',
+  ) {
+    const key = reportKey(type, targetId);
+    if (useReportedStore.getState().keys[key]) {
+      showAlert('Zaten şikayet ettin', 'Bunu daha önce şikayet ettin; tekrar göndermene gerek yok.');
+      return;
+    }
+    try {
+      await report.mutateAsync(args);
+      useReportedStore.getState().mark(key);
+      showAlert('Teşekkürler', thanks);
+    } catch (e) {
+      const msg = getErrorMessage(e, 'Şikayet gönderilemedi.');
+      if (/zaten şikayet/i.test(msg)) useReportedStore.getState().mark(key);
+      showAlert(/zaten şikayet/i.test(msg) ? 'Zaten şikayet ettin' : 'Şikayet gönderilemedi', msg);
+    }
+  }
+
   const deleteAccount = useMutation({
     mutationFn: async () => {
       // Önce yüklenen dosyalar (RPC yalnız DB satırlarını siler; dosyalar storage'da kalırdı).
@@ -123,5 +152,5 @@ export function useModeration() {
     },
   });
 
-  return { block, unblock, report, deleteAccount };
+  return { block, unblock, report, sendReport, deleteAccount };
 }

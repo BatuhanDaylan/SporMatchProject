@@ -22,7 +22,7 @@ export default function FeedScreen() {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useFeed();
   const { toggleLike, deletePost } = useFeedActions();
-  const { report } = useModeration();
+  const { sendReport } = useModeration();
 
   function confirmDelete(id: string) {
     showAlert('Gönderiyi sil', 'Bu gönderi silinecek. Emin misin?', [
@@ -37,14 +37,16 @@ export default function FeedScreen() {
       {
         text: 'Şikayet et',
         style: 'destructive',
-        onPress: () => {
-          report.mutate({
-            userId: post.author_id,
-            reason: 'Uygunsuz gönderi',
-            context: { type: 'post', post_id: post.id, body: post.body },
-          });
-          showAlert('Teşekkürler', 'Şikayetin alındı.');
-        },
+        onPress: () =>
+          sendReport(
+            {
+              userId: post.author_id,
+              reason: 'Uygunsuz gönderi',
+              context: { type: 'post', post_id: post.id, body: post.body },
+            },
+            'post',
+            post.id,
+          ),
       },
     ]);
   }

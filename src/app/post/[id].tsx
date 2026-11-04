@@ -17,6 +17,8 @@ import { useColors } from '@/hooks/useColors';
 import { useFeedActions, usePostDetail } from '@/hooks/useFeed';
 import { usePostComments, type PostComment } from '@/hooks/usePostComments';
 import { useModeration } from '@/hooks/useModeration';
+import { COMMENT_PAGE } from '@/components/comments-section';
+import { useIsReported } from '@/store/reported';
 import { timeAgo } from '@/lib/datetime';
 import { Spacing, Type } from '@/constants/theme';
 
@@ -27,8 +29,9 @@ export default function PostDetailScreen() {
   const { data: post, isLoading, isError, refetch } = usePostDetail(id);
   const { toggleLike } = useFeedActions();
   const { data: comments, isLoading: commentsLoading, add, remove, currentUserId } = usePostComments(id);
-  const { report } = useModeration();
+  const { sendReport } = useModeration();
   const [text, setText] = useState('');
+  const [shown, setShown] = useState(COMMENT_PAGE);
 
   function reportComment(cm: PostComment) {
     showAlert('Yorumu şikayet et', 'Bu yorum uygunsuz mu?', [
@@ -36,17 +39,22 @@ export default function PostDetailScreen() {
       {
         text: 'Şikayet et',
         style: 'destructive',
-        onPress: () => {
-          report.mutate({
-            userId: cm.author_id,
-            reason: 'Uygunsuz yorum',
-            context: { type: 'post_comment', comment_id: cm.id, post_id: id, body: cm.body },
-          });
-          showAlert('Teşekkürler', 'Şikayetin alındı.');
-        },
+        onPress: () =>
+          sendReport(
+            {
+              userId: cm.author_id,
+              reason: 'Uygunsuz yorum',
+              context: { type: 'post_comment', comment_id: cm.id, post_id: id, body: cm.body },
+            },
+            'post_comment',
+            cm.id,
+          ),
       },
     ]);
   }
+
+  const visible = (comments ?? []).slice(0, shown);
+  const remaining = (comments?.length ?? 0) - visible.length;
 
   function confirmDelete(cid: string) {
     showAlert('Yorumu sil', 'Bu yorum silinecek. Emin misin?', [
@@ -162,17 +170,30 @@ export default function PostDetailScreen() {
           ) : (comments?.length ?? 0) === 0 ? (
             <Text style={{ color: c.textSecondary, fontSize: 13 }}>İlk yorumu sen yaz.</Text>
           ) : (
-            comments!.map((cm) => (
-              <CommentRow
-                key={cm.id}
-                comment={cm}
-                canDelete={cm.author_id === currentUserId || post.is_mine}
-                canReport={cm.author_id !== currentUserId}
-                onDelete={() => confirmDelete(cm.id)}
-                onReport={() => reportComment(cm)}
-                onOpenAuthor={() => router.push(`/user/${cm.author_id}`)}
-              />
-            ))
+            <>
+              {visible.map((cm) => (
+                <CommentRow
+                  key={cm.id}
+                  comment={cm}
+                  canDelete={cm.author_id === currentUserId || post.is_mine}
+                  canReport={cm.author_id !== currentUserId}
+                  onDelete={() => confirmDelete(cm.id)}
+                  onReport={() => reportComment(cm)}
+                  onOpenAuthor={() => router.push(`/user/${cm.author_id}`)}
+                />
+              ))}
+              {remaining > 0 ? (
+                <Pressable
+                  onPress={() => setShown((n) => n + COMMENT_PAGE)}
+                  style={styles.more}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${remaining} yorum daha göster`}>
+                  <Text style={{ color: c.primary, fontWeight: '700', fontSize: 14 }}>
+                    {Math.min(remaining, COMMENT_PAGE)} yorum daha göster ({remaining} kaldı)
+                  </Text>
+                </Pressable>
+              ) : null}
+            </>
           )}
         </View>
         ) : null}
@@ -198,6 +219,7 @@ function CommentRow({
 }) {
   const c = useColors();
   const name = displayName(comment.author);
+  const reported = useIsReported('post_comment', comment.id);
   return (
     <View style={styles.commentRow}>
       <Pressable onPress={onOpenAuthor} hitSlop={4} accessibilityRole="button" accessibilityLabel={`${name} profili`}>
@@ -210,8 +232,12 @@ function CommentRow({
           </Text>
           <Text style={{ color: c.textSecondary, fontSize: 11 }}>{timeAgo(comment.created_at)}</Text>
           {canReport ? (
-            <Pressable onPress={onReport} hitSlop={8} accessibilityRole="button" accessibilityLabel="Yorumu şikayet et">
-              <Ionicons name="flag-outline" size={15} color={c.textSecondary} />
+            <Pressable
+              onPress={onReport}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={reported ? 'Şikayet edildi' : 'Yorumu şikayet et'}>
+              <Ionicons name={reported ? 'flag' : 'flag-outline'} size={15} color={reported ? c.danger : c.textSecondary} />
             </Pressable>
           ) : null}
           {canDelete ? (
@@ -239,6 +265,7 @@ const styles = StyleSheet.create({
   likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
   countChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   commentsHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  more: { alignItems: 'center', paddingVertical: Spacing.two },
   countBadge: { minWidth: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
   inputRow: {
     flexDirection: 'row',

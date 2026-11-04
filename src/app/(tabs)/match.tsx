@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -11,7 +12,8 @@ import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useProfile } from '@/hooks/useProfile';
 import { useMySports, useSports } from '@/hooks/useSports';
-import { cancelMyActiveSession, useIncomingMatchListener, useStartMatching } from '@/hooks/useMatch';
+import { cancelMyActiveSession, useIncomingMatchListener, useMyPendingMatches, useStartMatching } from '@/hooks/useMatch';
+import { displayName } from '@/lib/displayName';
 import { getErrorMessage } from '@/lib/errorMessage';
 import { Spacing, Type } from '@/constants/theme';
 
@@ -48,6 +50,13 @@ export default function MatchScreen() {
   const { data: profile } = useProfile();
   const { data: sports } = useSports();
   const start = useStartMatching();
+  const pending = useMyPendingMatches();
+  useFocusEffect(
+    useCallback(() => {
+      pending.refetch();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   const mySports = useMySports(profile, sports);
 
@@ -132,6 +141,43 @@ export default function MatchScreen() {
           Spor ve mesafeni seç, yakınındaki sporcuyla eşleş.
         </Text>
       </View>
+
+      {/* Bekleyen eşleşmeler: ekrandan çıksan da kaybolmaz */}
+      {(pending.data?.length ?? 0) > 0 ? (
+        <View style={{ gap: Spacing.two }}>
+          <Text style={[styles.step, { color: c.text }]}>Bekleyen eşleşmelerin</Text>
+          {pending.data!.map((m) => {
+            const name = displayName(m);
+            return (
+              <Card
+                key={m.match_id}
+                onPress={() => router.push(`/match/${m.match_id}`)}
+                style={[styles.pendingCard, { borderColor: c.primary }]}
+                accessibilityRole="button"
+                accessibilityLabel={`${name} ile eşleşme`}>
+                <Avatar name={name} url={m.avatar_url} size={44} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: c.text, fontWeight: '700', fontSize: 15 }} numberOfLines={1}>
+                    {name}
+                  </Text>
+                  <Text style={{ color: c.textSecondary, fontSize: 12 }} numberOfLines={1}>
+                    {[
+                      m.sport_name ? `${m.sport_icon ?? ''} ${m.sport_name}`.trim() : null,
+                      m.distance_m != null ? `${(m.distance_m / 1000).toFixed(1)} km` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </Text>
+                  <Text style={{ color: c.primary, fontSize: 12, fontWeight: '700', marginTop: 2 }}>
+                    {m.i_confirmed ? 'Onayladın · karşı tarafı bekliyor' : 'Seni bekliyor · onayla'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={c.textSecondary} />
+              </Card>
+            );
+          })}
+        </View>
+      ) : null}
 
       {/* 1) Spor seçimi — tüm seçenekler görünür, dokununca işaretlenir */}
       <TourTarget id="match.sports" style={{ gap: Spacing.two }}>
@@ -290,6 +336,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pendingCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, padding: Spacing.two, borderRadius: 14, borderWidth: 1.5 },
   noSports: { alignItems: 'center', gap: Spacing.two, padding: Spacing.three },
   radii: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   summary: { fontSize: 13, textAlign: 'center', fontWeight: '600' },

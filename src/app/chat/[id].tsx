@@ -1,16 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { displayName } from '@/lib/displayName';
 import { getErrorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/store/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AsyncState } from '@/components/ui/async-state';
+import { Avatar } from '@/components/ui/avatar';
 import { useColors } from '@/hooks/useColors';
-import { useMessages, type Conversation, type Message } from '@/hooks/useChat';
+import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
+import { useConversationList, useDeleteConversation, useMessages, type Message } from '@/hooks/useChat';
 import { shortDate, startOfDay } from '@/lib/datetime';
 import { Spacing } from '@/constants/theme';
 
@@ -31,13 +33,36 @@ export default function ChatThreadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: messages, isLoading, send, currentUserId } = useMessages(id);
   const [text, setText] = useState('');
+  const router = useRouter();
+  const del = useDeleteConversation();
+  const { ref: boxRef, overlap } = useKeyboardOverlap();
 
-  // Başlıkta karşı tarafın adı: Sohbet sekmesinin önbelleğinden okunur (yeni sorgu/realtime kanalı açmaz;
-  // önbellekte yoksa — ör. bildirimden açılış — 'Sohbet' kalır).
-  const qc = useQueryClient();
-  const convs = qc.getQueryData<Conversation[]>(['conversations']);
+  // Karşı taraf: sohbet listesinden (önbellekte yoksa — ör. bildirimden açılış — kendisi çeker).
+  const { data: convs } = useConversationList();
   const partner = convs?.find((x) => x.conversation_id === id);
-  const title = partner?.partner_name || partner?.partner_username || 'Sohbet';
+  const title = partner ? displayName({ display_name: partner.partner_name, username: partner.partner_username }) : 'Sohbet';
+
+  function openProfile() {
+    if (partner?.partner_id) router.push(`/user/${partner.partner_id}`);
+  }
+
+  function confirmDelete() {
+    showAlert('Sohbeti sil', 'Bu sohbet yalnızca senin tarafında silinir; karşı taraf etkilenmez. Yeni mesaj gelirse yeniden görünür.', [
+      { text: 'Vazgeç', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await del.mutateAsync(id);
+            router.back();
+          } catch (e) {
+            showAlert('Silinemedi', getErrorMessage(e, 'Bir hata oluştu.'));
+          }
+        },
+      },
+    ]);
+  }
 
   // Ters liste (en yeni altta) — inverted FlatList için tersle
   const reversed = useMemo(() => (messages ? [...messages].reverse() : []), [messages]);
@@ -70,11 +95,32 @@ export default function ChatThreadScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: c.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}>
-      <Stack.Screen options={{ headerShown: true, title }} />
+    <View ref={boxRef} style={{ flex: 1, backgroundColor: c.background, paddingBottom: overlap }}>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title,
+          headerTitle: () => (
+            <Pressable
+              onPress={openProfile}
+              disabled={!partner}
+              hitSlop={8}
+              style={styles.headerTitle}
+              accessibilityRole="button"
+              accessibilityLabel={`${title} profilini aç`}>
+              {partner ? <Avatar name={title} url={partner.partner_avatar} size={30} /> : null}
+              <Text style={[styles.headerName, { color: c.text }]} numberOfLines={1}>
+                {title}
+              </Text>
+            </Pressable>
+          ),
+          headerRight: () => (
+            <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel="Sohbeti sil">
+              <Ionicons name="trash-outline" size={22} color={c.text} />
+            </Pressable>
+          ),
+        }}
+      />
       <AsyncState
         isLoading={isLoading}
         isEmpty={reversed.length === 0}
@@ -91,7 +137,8 @@ export default function ChatThreadScreen() {
       <View
         style={[
           styles.inputBar,
-          { backgroundColor: c.background, borderTopColor: c.border, paddingBottom: insets.bottom + 8 },
+          // Klavye açıkken alt güvenli alan boşluğu gereksiz (klavye zaten altta)
+          { backgroundColor: c.background, borderTopColor: c.border, paddingBottom: (overlap > 0 ? 0 : insets.bottom) + 8 },
         ]}>
         <TextInput
           placeholder="Mesaj yaz…"
@@ -110,7 +157,7 @@ export default function ChatThreadScreen() {
           <Ionicons name="send" size={20} color={text.trim() ? c.onPrimary : c.textSecondary} />
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -125,9 +172,21 @@ const Bubble = memo(function Bubble({ msg, mine }: { msg: Message; mine: boolean
           : { backgroundColor: c.backgroundElement, alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
       ]}>
       <Text style={{ color: mine ? c.onPrimary : c.text, fontSize: 15 }}>{msg.body}</Text>
-      <Text style={[styles.time, { color: mine ? c.onPrimary : c.textSecondary }]}>
-        {new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-      </Text>
+      <View style={styles.meta}>
+        <Text style={[styles.time, { color: mine ? c.onPrimary : c.textSecondary }]}>
+          {new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+        {mine ? (
+          // ✓ gönderildi, ✓✓ okundu (okununca vurgulu renk)
+          <Ionicons
+            name={msg.read_at ? 'checkmark-done' : 'checkmark'}
+            size={15}
+            color={msg.read_at ? '#BAE6FD' : c.onPrimary}
+            style={{ opacity: msg.read_at ? 1 : 0.7 }}
+            accessibilityLabel={msg.read_at ? 'Okundu' : 'Gönderildi'}
+          />
+        ) : null}
+      </View>
     </View>
   );
 });
@@ -135,7 +194,10 @@ const Bubble = memo(function Bubble({ msg, mine }: { msg: Message; mine: boolean
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   bubble: { maxWidth: '80%', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8 },
-  time: { fontSize: 10, marginTop: 3, alignSelf: 'flex-end', opacity: 0.8 },
+  meta: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: 3, marginTop: 3 },
+  time: { fontSize: 10, opacity: 0.8 },
+  headerTitle: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: 220 },
+  headerName: { fontSize: 17, fontWeight: '700', flexShrink: 1 },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',

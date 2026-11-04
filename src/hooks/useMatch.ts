@@ -50,6 +50,32 @@ export function useStartMatching() {
   });
 }
 
+export type PendingMatch = {
+  match_id: string;
+  partner_id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  sport_name: string | null;
+  sport_icon: string | null;
+  distance_m: number | null;
+  i_confirmed: boolean;
+  created_at: string;
+};
+
+/** Henüz iki taraf da onaylamamış eşleşmelerim (son 24 saat) — ekrandan çıkınca kaybolmasın. */
+export function useMyPendingMatches() {
+  return useQuery({
+    queryKey: ['pending-matches'],
+    staleTime: 10_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('my_pending_matches');
+      if (error) throw error;
+      return (data as unknown as PendingMatch[]) ?? [];
+    },
+  });
+}
+
 /** Aktif oturumu iptal et. */
 export async function cancelMyActiveSession() {
   await supabase.from('match_sessions').update({ status: 'cancelled' }).eq('status', 'searching');
@@ -114,14 +140,21 @@ export function useMatchActions() {
       const { error } = await supabase.rpc('confirm_match', { p_match_id: matchId });
       if (error) throw error;
     },
-    onSuccess: (_d, matchId) => qc.invalidateQueries({ queryKey: ['matchPartner', matchId] }),
+    onSuccess: (_d, matchId) => {
+      qc.invalidateQueries({ queryKey: ['matchPartner', matchId] });
+      qc.invalidateQueries({ queryKey: ['pending-matches'] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
   });
   const decline = useMutation({
     mutationFn: async (matchId: string) => {
       const { error } = await supabase.rpc('decline_match', { p_match_id: matchId });
       if (error) throw error;
     },
-    onSuccess: (_d, matchId) => qc.invalidateQueries({ queryKey: ['matchPartner', matchId] }),
+    onSuccess: (_d, matchId) => {
+      qc.invalidateQueries({ queryKey: ['matchPartner', matchId] });
+      qc.invalidateQueries({ queryKey: ['pending-matches'] });
+    },
   });
   return { confirm, decline };
 }

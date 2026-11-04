@@ -42,7 +42,7 @@ export default function PublicProfileScreen() {
   const { data: stats, isLoading: statsLoading } = useProfileStats(id);
   const sendRequest = useSendChatRequest();
   const { data: blocked } = useIsBlocked(isMe ? undefined : id);
-  const { block, unblock, report } = useModeration();
+  const { block, unblock, sendReport } = useModeration();
   const follow = useFollow(id);
   const following = follow.data?.is_following ?? false;
   const [reportOpen, setReportOpen] = useState(false);
@@ -50,9 +50,13 @@ export default function PublicProfileScreen() {
   const REPORT_REASONS = ['Uygunsuz fotoğraf', 'Uygunsuz içerik', 'Taciz', 'Spam', 'Sahte hesap', 'Diğer'];
 
   function submitReport(reason: string) {
-    report.mutate({ userId: id, reason, context: { type: 'profile', user_id: id } });
     setReportOpen(false);
-    showAlert('Teşekkürler', 'Şikayetin alındı. Ekibimiz inceleyecek.');
+    sendReport(
+      { userId: id, reason, context: { type: 'profile', user_id: id } },
+      'profile',
+      id,
+      'Şikayetin alındı. Ekibimiz inceleyecek.',
+    );
   }
 
   function openMenu() {

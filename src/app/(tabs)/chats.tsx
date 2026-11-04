@@ -1,7 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { displayName } from '@/lib/displayName';
+import { getErrorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/store/alert';
 import { timeAgo } from '@/lib/datetime';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -13,7 +16,7 @@ import { Screen } from '@/components/ui/screen';
 import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useChatRequests, type ChatRequest } from '@/hooks/useChatRequests';
-import { useConversations, type Conversation } from '@/hooks/useChat';
+import { useConversations, useDeleteConversation, type Conversation } from '@/hooks/useChat';
 import { BottomTabInset, Spacing, Type } from '@/constants/theme';
 
 export default function ChatsScreen() {
@@ -27,6 +30,27 @@ export default function ChatsScreen() {
     if (res.conversation_id) router.push(`/chat/${res.conversation_id}`);
   }
 
+  const del = useDeleteConversation();
+
+  function confirmDelete(conv: Conversation) {
+    const name = conv.partner_name || conv.partner_username || 'Sporcu';
+    showAlert(
+      'Sohbeti sil',
+      `${name} ile sohbet yalnızca senin tarafında silinir; karşı taraf etkilenmez. Yeni mesaj gelirse yeniden görünür.`,
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: () =>
+            del.mutate(conv.conversation_id, {
+              onError: (e) => showAlert('Silinemedi', getErrorMessage(e, 'Bir hata oluştu.')),
+            }),
+        },
+      ],
+    );
+  }
+
   const reqList = requests.data ?? [];
   const totalUnread = (data ?? []).reduce((n, conv) => n + conv.unread, 0);
 
@@ -34,7 +58,7 @@ export default function ChatsScreen() {
     <TourTarget id="chats.header" style={styles.titleRow}>
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: c.text }]}>Sohbet</Text>
-        <Text style={[styles.subtitle, { color: c.textSecondary }]}>Eşleştiğin sporcularla yaz.</Text>
+        <Text style={[styles.subtitle, { color: c.textSecondary }]}>Sporcu arkadaşlarınla mesajlaş.</Text>
       </View>
       {totalUnread > 0 ? (
         <View style={[styles.unreadPill, { backgroundColor: c.primary }]}>
@@ -114,7 +138,11 @@ export default function ChatsScreen() {
             />
           }
           renderItem={({ item }) => (
-            <ConversationRow conv={item} onPress={() => router.push(`/chat/${item.conversation_id}`)} />
+            <ConversationRow
+              conv={item}
+              onPress={() => router.push(`/chat/${item.conversation_id}`)}
+              onLongPress={() => confirmDelete(item)}
+            />
           )}
         />
         </TourTarget>
@@ -174,13 +202,17 @@ function RequestRow({
   );
 }
 
-function ConversationRow({ conv, onPress }: { conv: Conversation; onPress: () => void }) {
+function ConversationRow({ conv, onPress, onLongPress }: { conv: Conversation; onPress: () => void; onLongPress: () => void }) {
   const c = useColors();
   const name = conv.partner_name || conv.partner_username || 'Sporcu';
   const unread = conv.unread > 0;
+  const mineLast = !!conv.last_from_me && !!conv.last_message;
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
+      accessibilityHint="Silmek için basılı tut"
       accessibilityRole="button"
       accessibilityLabel={`${name}${unread ? `, ${conv.unread} okunmamış mesaj` : ''}`}
       style={({ pressed }) => [
@@ -196,11 +228,21 @@ function ConversationRow({ conv, onPress }: { conv: Conversation; onPress: () =>
         <Text style={[styles.name, { color: c.text }]} numberOfLines={1}>
           {name}
         </Text>
-        <Text
-          numberOfLines={1}
-          style={{ color: unread ? c.text : c.textSecondary, fontSize: 13, fontWeight: unread ? '600' : '400' }}>
-          {conv.last_message ?? 'Selam ver! 👋'}
-        </Text>
+        <View style={styles.lastRow}>
+          {mineLast ? (
+            <Ionicons
+              name={conv.last_read ? 'checkmark-done' : 'checkmark'}
+              size={16}
+              color={conv.last_read ? c.primary : c.textSecondary}
+              accessibilityLabel={conv.last_read ? 'Okundu' : 'Gönderildi'}
+            />
+          ) : null}
+          <Text
+            numberOfLines={1}
+            style={{ flex: 1, color: unread ? c.text : c.textSecondary, fontSize: 13, fontWeight: unread ? '600' : '400' }}>
+            {conv.last_message ?? 'Selam ver! 👋'}
+          </Text>
+        </View>
       </View>
       <View style={styles.rowRight}>
         {conv.last_at ? (
@@ -248,6 +290,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   rowRight: { alignItems: 'flex-end', gap: 6 },
+  lastRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   name: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   badge: { minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
 });

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { useAuth } from '@/lib/auth';
 import { assertClean } from '@/lib/moderation';
@@ -36,6 +37,26 @@ export function usePostComments(postId?: string) {
       return data as unknown as PostComment[];
     },
   });
+
+  // Realtime: başkalarının yorumu da (silme/gizleme dahil) anında görünsün
+  useEffect(() => {
+    if (!postId) return;
+    const ch = supabase
+      .channel(`post-comments:${postId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'post_comments', filter: `post_id=eq.${postId}` },
+        () => {
+          qc.invalidateQueries({ queryKey });
+          qc.invalidateQueries({ queryKey: ['feed'] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey });

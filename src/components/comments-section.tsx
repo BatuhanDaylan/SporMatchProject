@@ -10,14 +10,19 @@ import { Avatar } from '@/components/ui/avatar';
 import { useColors } from '@/hooks/useColors';
 import { useComments, type Comment } from '@/hooks/useComments';
 import { useModeration } from '@/hooks/useModeration';
+import { useIsReported } from '@/store/reported';
 import { Spacing } from '@/constants/theme';
+
+/** Her seferde gösterilen yorum sayısı ("daha fazla göster" ile artar). */
+export const COMMENT_PAGE = 10;
 
 /** Program yorumları — realtime liste + ekleme + silme. */
 export function CommentsSection({ programId, canModerate }: { programId: string; canModerate: boolean }) {
   const c = useColors();
   const { data: comments, isLoading, add, remove, currentUserId } = useComments(programId);
-  const { report } = useModeration();
+  const { sendReport } = useModeration();
   const [text, setText] = useState('');
+  const [shown, setShown] = useState(COMMENT_PAGE);
 
   function reportComment(cm: Comment) {
     showAlert('Yorumu şikayet et', 'Bu yorum uygunsuz mu?', [
@@ -25,14 +30,12 @@ export function CommentsSection({ programId, canModerate }: { programId: string;
       {
         text: 'Şikayet et',
         style: 'destructive',
-        onPress: () => {
-          report.mutate({
-            userId: cm.author_id,
-            reason: 'Uygunsuz yorum',
-            context: { type: 'comment', comment_id: cm.id, body: cm.body },
-          });
-          showAlert('Teşekkürler', 'Şikayetin alındı.');
-        },
+        onPress: () =>
+          sendReport(
+            { userId: cm.author_id, reason: 'Uygunsuz yorum', context: { type: 'comment', comment_id: cm.id, body: cm.body } },
+            'comment',
+            cm.id,
+          ),
       },
     ]);
   }
@@ -48,6 +51,9 @@ export function CommentsSection({ programId, canModerate }: { programId: string;
       showAlert('Gönderilemedi', getErrorMessage(e, 'Bir hata oluştu.'));
     }
   }
+
+  const visible = (comments ?? []).slice(0, shown);
+  const remaining = (comments?.length ?? 0) - visible.length;
 
   function confirmDelete(id: string) {
     showAlert('Yorumu sil', 'Bu yorum silinecek. Emin misin?', [
@@ -91,16 +97,29 @@ export function CommentsSection({ programId, canModerate }: { programId: string;
       ) : (comments?.length ?? 0) === 0 ? (
         <Text style={{ color: c.textSecondary, fontSize: 13 }}>İlk yorumu sen yaz.</Text>
       ) : (
-        comments!.map((cm) => (
-          <CommentRow
-            key={cm.id}
-            comment={cm}
-            canDelete={cm.author_id === currentUserId || canModerate}
-            canReport={cm.author_id !== currentUserId}
-            onDelete={() => confirmDelete(cm.id)}
-            onReport={() => reportComment(cm)}
-          />
-        ))
+        <>
+          {visible.map((cm) => (
+            <CommentRow
+              key={cm.id}
+              comment={cm}
+              canDelete={cm.author_id === currentUserId || canModerate}
+              canReport={cm.author_id !== currentUserId}
+              onDelete={() => confirmDelete(cm.id)}
+              onReport={() => reportComment(cm)}
+            />
+          ))}
+          {remaining > 0 ? (
+            <Pressable
+              onPress={() => setShown((n) => n + COMMENT_PAGE)}
+              style={styles.more}
+              accessibilityRole="button"
+              accessibilityLabel={`${remaining} yorum daha göster`}>
+              <Text style={{ color: c.primary, fontWeight: '700', fontSize: 14 }}>
+                {Math.min(remaining, COMMENT_PAGE)} yorum daha göster ({remaining} kaldı)
+              </Text>
+            </Pressable>
+          ) : null}
+        </>
       )}
     </View>
   );
@@ -121,6 +140,7 @@ function CommentRow({
 }) {
   const c = useColors();
   const name = displayName(comment.author);
+  const reported = useIsReported('comment', comment.id);
   return (
     <View style={styles.row}>
       <Avatar name={name} url={comment.author?.avatar_url} size={32} />
@@ -137,8 +157,12 @@ function CommentRow({
         ) : null}
       </View>
       {canReport ? (
-        <Pressable onPress={onReport} hitSlop={8} accessibilityRole="button" accessibilityLabel="Yorumu şikayet et">
-          <Ionicons name="flag-outline" size={15} color={c.textSecondary} />
+        <Pressable
+          onPress={onReport}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={reported ? 'Şikayet edildi' : 'Yorumu şikayet et'}>
+          <Ionicons name={reported ? 'flag' : 'flag-outline'} size={15} color={reported ? c.danger : c.textSecondary} />
         </Pressable>
       ) : null}
       {canDelete ? (
@@ -174,6 +198,7 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, minHeight: 44, maxHeight: 120, paddingVertical: 10, fontSize: 15 },
   sendBtn: { padding: 10 },
+  more: { alignItems: 'center', paddingVertical: Spacing.two },
   row: { flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start', paddingVertical: 6 },
   rowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   name: { fontSize: 14, fontWeight: '700' },

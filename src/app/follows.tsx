@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { displayName } from '@/lib/displayName';
 import { AsyncState } from '@/components/ui/async-state';
@@ -24,6 +25,13 @@ export default function FollowsScreen() {
     params.tab === 'following' ? 'following' : 'followers',
   );
   const { data, isLoading } = useFollowList(params.userId, tab);
+  const [query, setQuery] = useState('');
+
+  // Ad ya da kullanıcı adına göre süz (Türkçe yerel ayarla küçültülerek karşılaştırılır)
+  const q = query.trim().toLocaleLowerCase('tr');
+  const filtered = q
+    ? (data ?? []).filter((u) => `${u.display_name ?? ''} ${u.username ?? ''}`.toLocaleLowerCase('tr').includes(q))
+    : data;
 
   return (
     <Screen>
@@ -36,16 +44,41 @@ export default function FollowsScreen() {
         style={{ marginTop: Spacing.one }}
       />
 
+      <View style={[styles.search, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+        <Ionicons name="search" size={18} color={c.textSecondary} />
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Ad veya kullanıcı adı ara…"
+          placeholderTextColor={c.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+          style={[styles.searchInput, { color: c.text }]}
+          accessibilityLabel="Listede ara"
+        />
+        {query ? (
+          <Pressable onPress={() => setQuery('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Aramayı temizle">
+            <Ionicons name="close-circle" size={18} color={c.textSecondary} />
+          </Pressable>
+        ) : null}
+      </View>
+
       <AsyncState
         isLoading={isLoading}
-        isEmpty={(data?.length ?? 0) === 0}
-        empty={{
-          icon: 'people-outline',
-          title: tab === 'followers' ? 'Takipçi yok' : 'Takip edilen yok',
-          text: tab === 'followers' ? 'Henüz takipçisi yok.' : 'Henüz kimseyi takip etmiyor.',
-        }}>
+        isEmpty={(filtered?.length ?? 0) === 0}
+        empty={
+          q
+            ? { icon: 'search-outline', title: 'Sonuç yok', text: `"${query.trim()}" ile eşleşen kimse bulunamadı.` }
+            : {
+                icon: 'people-outline',
+                title: tab === 'followers' ? 'Takipçi yok' : 'Takip edilen yok',
+                text: tab === 'followers' ? 'Henüz takipçisi yok.' : 'Henüz kimseyi takip etmiyor.',
+              }
+        }>
         <FlatList
-          data={data}
+          data={filtered}
+          keyboardShouldPersistTaps="handled"
           keyExtractor={(u) => u.id}
           contentContainerStyle={{ paddingVertical: Spacing.two }}
           renderItem={({ item }) => {
@@ -71,5 +104,15 @@ export default function FollowsScreen() {
 }
 
 const styles = StyleSheet.create({
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: Spacing.three,
+    minHeight: 46,
+  },
+  searchInput: { flex: 1, fontSize: 15, paddingVertical: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.two },
 });

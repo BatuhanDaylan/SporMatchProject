@@ -452,6 +452,8 @@ export type Database = {
       expire_stale_sessions: { Args: Record<string, never>; Returns: undefined };
       list_conversations: { Args: Record<string, never>; Returns: Json };
       mark_conversation_read: { Args: { p_conversation_id: string }; Returns: undefined };
+      delete_conversation: { Args: { p_conversation_id: string }; Returns: undefined };
+      my_pending_matches: { Args: Record<string, never>; Returns: Json };
       get_profile_stats: { Args: { p_user_id?: string }; Returns: Json };
       discover_programs: {
         Args: { p_sort?: string; p_period_days?: number; p_limit?: number };
