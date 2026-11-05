@@ -55,7 +55,8 @@ export async function registerForPushNotifications(userId: string): Promise<stri
     if (__DEV__) console.log('📲 Expo push token:', token); // test için: expo.dev/notifications'a yapıştır
     const { error } = await supabase
       .from('push_tokens')
-      .upsert({ token, user_id: userId, platform: Platform.OS });
+      // updated_at her açılışta tazelenir: uzun süredir yenilenmeyen jeton "ölü" sayılır (✓✓ ve temizlik için)
+      .upsert({ token, user_id: userId, platform: Platform.OS, updated_at: new Date().toISOString() });
     if (error) {
       console.warn('Push token kaydedilemedi:', error.message);
       return null;

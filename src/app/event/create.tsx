@@ -120,7 +120,16 @@ export default function CreateEventScreen() {
       });
       router.replace(`/event/${res.id}`);
     } catch (e) {
-      showAlert('Oluşturulamadı', getErrorMessage(e, 'Bir hata oluştu.'));
+      const msg = getErrorMessage(e, 'Bir hata oluştu.');
+      // Ücretsiz etkinlik sınırı (yalnız Pro satıştayken) → Pro ekranına yönlendir
+      if (msg.includes('SporMatch Pro')) {
+        showAlert('Etkinlik sınırı', msg, [
+          { text: 'Vazgeç', style: 'cancel' },
+          { text: "Pro'yu gör", onPress: () => router.push('/pro') },
+        ]);
+      } else {
+        showAlert('Oluşturulamadı', msg);
+      }
     }
   }
 

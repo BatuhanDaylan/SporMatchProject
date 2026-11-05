@@ -101,7 +101,8 @@ export default function ProfileEditScreen() {
         .eq('id', user!.id);
       if (pErr) throw pErr;
 
-      await supabase.from('user_sports').delete().eq('user_id', user!.id);
+      const { error: dErr } = await supabase.from('user_sports').delete().eq('user_id', user!.id);
+      if (dErr) throw dErr; // silinemezse ekleme yapma (eski + yeni sporlar karışmasın)
       const rows = [...selected].map((sport_id) => ({ user_id: user!.id, sport_id, skill_level: level }));
       if (rows.length) {
         const { error: sErr } = await supabase.from('user_sports').insert(rows);

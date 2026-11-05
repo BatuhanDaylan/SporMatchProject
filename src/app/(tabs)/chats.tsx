@@ -16,7 +16,7 @@ import { Screen } from '@/components/ui/screen';
 import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useChatRequests, type ChatRequest } from '@/hooks/useChatRequests';
-import { useConversations, useDeleteConversation, type Conversation } from '@/hooks/useChat';
+import { tickState, useConversations, useDeleteConversation, type Conversation } from '@/hooks/useChat';
 import { BottomTabInset, Spacing, Type } from '@/constants/theme';
 
 export default function ChatsScreen() {
@@ -26,8 +26,18 @@ export default function ChatsScreen() {
   const requests = useChatRequests();
 
   async function onAccept(matchId: string) {
-    const res = await requests.accept.mutateAsync(matchId);
-    if (res.conversation_id) router.push(`/chat/${res.conversation_id}`);
+    try {
+      const res = await requests.accept.mutateAsync(matchId);
+      if (res.conversation_id) router.push(`/chat/${res.conversation_id}`);
+    } catch (e) {
+      showAlert('Kabul edilemedi', getErrorMessage(e));
+    }
+  }
+
+  function onDecline(matchId: string) {
+    requests.decline.mutate(matchId, {
+      onError: (e) => showAlert('Reddedilemedi', getErrorMessage(e)),
+    });
   }
 
   const del = useDeleteConversation();
@@ -87,7 +97,7 @@ export default function ChatsScreen() {
               c={c}
               busy={requests.accept.isPending || requests.decline.isPending}
               onAccept={() => onAccept(r.match_id)}
-              onDecline={() => requests.decline.mutate(r.match_id)}
+              onDecline={() => onDecline(r.match_id)}
               onOpenProfile={() => router.push(`/user/${r.from_id}`)}
             />
           ))}
@@ -202,6 +212,12 @@ function RequestRow({
   );
 }
 
+/** Son mesaj tiki: ✓ gönderildi · ✓✓ iletildi (gri) · ✓✓ okundu (mavi). */
+function LastTick({ read, delivered, c }: { read: boolean; delivered: boolean; c: ReturnType<typeof useColors> }) {
+  const t = tickState(read, delivered);
+  return <Ionicons name={t.icon} size={16} color={t.read ? '#0EA5E9' : c.textSecondary} accessibilityLabel={t.label} />;
+}
+
 function ConversationRow({ conv, onPress, onLongPress }: { conv: Conversation; onPress: () => void; onLongPress: () => void }) {
   const c = useColors();
   const name = conv.partner_name || conv.partner_username || 'Sporcu';
@@ -229,14 +245,7 @@ function ConversationRow({ conv, onPress, onLongPress }: { conv: Conversation; o
           {name}
         </Text>
         <View style={styles.lastRow}>
-          {mineLast ? (
-            <Ionicons
-              name={conv.last_read ? 'checkmark-done' : 'checkmark'}
-              size={16}
-              color={conv.last_read ? c.primary : c.textSecondary}
-              accessibilityLabel={conv.last_read ? 'Okundu' : 'Gönderildi'}
-            />
-          ) : null}
+          {mineLast ? <LastTick read={!!conv.last_read} delivered={!!conv.last_delivered} c={c} /> : null}
           <Text
             numberOfLines={1}
             style={{ flex: 1, color: unread ? c.text : c.textSecondary, fontSize: 13, fontWeight: unread ? '600' : '400' }}>

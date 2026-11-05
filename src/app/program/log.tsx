@@ -20,8 +20,11 @@ import type { LogEntry } from '@/types/program';
 
 type ValueMap = Record<string, Record<string, string | boolean>>;
 
+/** Yerel (cihaz saat dilimindeki) bugünün tarihi: YYYY-AA-GG. toISOString UTC verir; Türkiye'de gece 00-03 arası dünü gösterirdi. */
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 export default function LogWorkoutScreen() {

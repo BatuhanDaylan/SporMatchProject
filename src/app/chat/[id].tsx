@@ -12,7 +12,8 @@ import { AsyncState } from '@/components/ui/async-state';
 import { Avatar } from '@/components/ui/avatar';
 import { useColors } from '@/hooks/useColors';
 import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
-import { useConversationList, useDeleteConversation, useMessages, type Message } from '@/hooks/useChat';
+import { tickState, useConversationList, useDeleteConversation, useMessages, type Message } from '@/hooks/useChat';
+import { useIsBlocked, useModeration } from '@/hooks/useModeration';
 import { shortDate, startOfDay } from '@/lib/datetime';
 import { Spacing } from '@/constants/theme';
 
@@ -41,6 +42,9 @@ export default function ChatThreadScreen() {
   const { data: convs } = useConversationList();
   const partner = convs?.find((x) => x.conversation_id === id);
   const title = partner ? displayName({ display_name: partner.partner_name, username: partner.partner_username }) : 'Sohbet';
+  // Karşı tarafı ben engellediysem yazma kutusu yerine bilgi + engeli kaldır (sunucu zaten reddeder)
+  const { data: iBlocked } = useIsBlocked(partner?.partner_id);
+  const { unblock } = useModeration();
 
   function openProfile() {
     if (partner?.partner_id) router.push(`/user/${partner.partner_id}`);
@@ -134,6 +138,19 @@ export default function ChatThreadScreen() {
         />
       </AsyncState>
 
+      {iBlocked ? (
+        <View style={[styles.blockedBar, { borderTopColor: c.border, paddingBottom: insets.bottom + 12 }]}>
+          <Text style={{ color: c.textSecondary, fontSize: 14, flex: 1 }}>Bu kişiyi engelledin. Mesaj gönderemezsin.</Text>
+          <Pressable
+            onPress={() => partner && unblock.mutate(partner.partner_id)}
+            disabled={unblock.isPending}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Engeli kaldır">
+            <Text style={{ color: c.primary, fontWeight: '700', fontSize: 14 }}>Engeli kaldır</Text>
+          </Pressable>
+        </View>
+      ) : (
       <View
         style={[
           styles.inputBar,
@@ -157,6 +174,7 @@ export default function ChatThreadScreen() {
           <Ionicons name="send" size={20} color={text.trim() ? c.onPrimary : c.textSecondary} />
         </Pressable>
       </View>
+      )}
     </View>
   );
 }
@@ -176,20 +194,25 @@ const Bubble = memo(function Bubble({ msg, mine }: { msg: Message; mine: boolean
         <Text style={[styles.time, { color: mine ? c.onPrimary : c.textSecondary }]}>
           {new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
         </Text>
-        {mine ? (
-          // ✓ gönderildi, ✓✓ okundu (okununca vurgulu renk)
-          <Ionicons
-            name={msg.read_at ? 'checkmark-done' : 'checkmark'}
-            size={15}
-            color={msg.read_at ? '#BAE6FD' : c.onPrimary}
-            style={{ opacity: msg.read_at ? 1 : 0.7 }}
-            accessibilityLabel={msg.read_at ? 'Okundu' : 'Gönderildi'}
-          />
-        ) : null}
+        {mine ? <BubbleTick read={!!msg.read_at} delivered={!!msg.delivered_at} color={c.onPrimary} /> : null}
       </View>
     </View>
   );
 });
+
+/** ✓ gönderildi · ✓✓ iletildi (bildirim gitti) · mavi ✓✓ okundu. Turuncu balonda okunur açık mavi. */
+function BubbleTick({ read, delivered, color }: { read: boolean; delivered: boolean; color: string }) {
+  const t = tickState(read, delivered);
+  return (
+    <Ionicons
+      name={t.icon}
+      size={15}
+      color={t.read ? '#7DD3FC' : color}
+      style={{ opacity: t.read ? 1 : 0.75 }}
+      accessibilityLabel={t.label}
+    />
+  );
+}
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -207,6 +230,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   input: { flex: 1, minHeight: 44, maxHeight: 120, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15 },
+  blockedBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: Spacing.three,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
   send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   day: { alignSelf: 'center', fontSize: 12, fontWeight: '600', marginVertical: 6 },
 });

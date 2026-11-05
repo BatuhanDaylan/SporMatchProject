@@ -15,6 +15,7 @@ import { useColors } from '@/hooks/useColors';
 import { useFollow } from '@/hooks/useFollow';
 import { useNotifications } from '@/hooks/useNotifications';
 import { usePro } from '@/hooks/usePro';
+import { PRO_ENFORCED } from '@/constants/pro';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { useSports } from '@/hooks/useSports';
@@ -109,7 +110,7 @@ export default function ProfileScreen() {
                 ]}>
                 <Ionicons name="flash" size={18} color={c.primary} />
                 <Text style={{ color: c.text, fontWeight: '700', fontSize: 14, flex: 1 }}>
-                  SporMatch Pro'ya geç — sınırsız eşleş
+                  {PRO_ENFORCED ? "SporMatch Pro'ya geç — sınırsız eşleş" : 'SporMatch Pro — şu an tüm özellikler ücretsiz'}
                 </Text>
                 <Ionicons name="chevron-forward" size={18} color={c.textSecondary} />
               </Pressable>

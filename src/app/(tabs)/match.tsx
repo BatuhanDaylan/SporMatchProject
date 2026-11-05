@@ -15,6 +15,7 @@ import { useMySports, useSports } from '@/hooks/useSports';
 import { cancelMyActiveSession, useIncomingMatchListener, useMyPendingMatches, useStartMatching } from '@/hooks/useMatch';
 import { displayName } from '@/lib/displayName';
 import { getErrorMessage } from '@/lib/errorMessage';
+import { FREE_DAILY_MATCHES } from '@/constants/pro';
 import { Spacing, Type } from '@/constants/theme';
 
 const RADII = [1, 3, 5, 10, 25];
@@ -249,7 +250,7 @@ export default function MatchScreen() {
             <Text style={[styles.proTitle, { color: c.text }]}>Bugünlük ücretsiz hakkın bitti</Text>
           </View>
           <Text style={{ color: c.textSecondary, fontSize: 13 }}>
-            Ücretsiz katmanda günde 3 eşleşme başlatabilirsin. SporMatch Pro ile sınırsız eşleş.
+            Ücretsiz katmanda günde {FREE_DAILY_MATCHES} eşleşme başlatabilirsin. SporMatch Pro ile sınırsız eşleş.
           </Text>
           <Pressable
             onPress={() => router.push('/pro')}

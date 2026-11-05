@@ -5,13 +5,34 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Screen } from '@/components/ui/screen';
 import { useColors } from '@/hooks/useColors';
 import { usePro } from '@/hooks/usePro';
+import { FREE_ACTIVE_EVENTS, FREE_DAILY_MATCHES, PRO_ENFORCED } from '@/constants/pro';
 import { Spacing } from '@/constants/theme';
 
 const FEATURES = [
   {
     icon: 'infinite-outline' as const,
     title: 'Sınırsız eşleşme',
-    desc: 'Ücretsiz katmanda günde en fazla 3 eşleşme başlatabilirsin — Pro ile sınır kalkar.',
+    desc: `Ücretsiz sürümde günde ${FREE_DAILY_MATCHES} eşleşme başlatabilirsin. Pro'da sınır yok.`,
+  },
+  {
+    icon: 'calendar-outline' as const,
+    title: 'Sınırsız planlı etkinlik',
+    desc: `Ücretsiz sürümde aynı anda en fazla ${FREE_ACTIVE_EVENTS} aktif etkinlik açabilirsin. Pro'da istediğin kadar.`,
+  },
+  {
+    icon: 'eye-off-outline' as const,
+    title: 'Reklamsız kullanım',
+    desc: 'Ücretsiz sürümde reklam gösterilecek. Pro üyeler reklam görmez.',
+  },
+  {
+    icon: 'ribbon-outline' as const,
+    title: 'Pro rozeti',
+    desc: 'Profilinde Pro rozeti görünür, diğer sporcular seni öne çıkmış görür.',
+  },
+  {
+    icon: 'chatbubbles-outline' as const,
+    title: 'Öncelikli destek',
+    desc: 'Soru ve bildirimlerine öncelikli dönüş yapılır.',
   },
   {
     icon: 'heart-outline' as const,
@@ -34,7 +55,7 @@ export default function ProScreen() {
         </View>
         <Text style={[styles.heroTitle, { color: c.text }]}>SporMatch Pro</Text>
         <Text style={[styles.heroSub, { color: c.textSecondary }]}>
-          Sınırsız eşleş, topluluğun büyümesine destek ol.
+          Sınırsız eşleş, sınırsız etkinlik aç, reklamsız kullan.
         </Text>
       </View>
 
@@ -52,6 +73,18 @@ export default function ProScreen() {
         </View>
       ) : (
         <>
+          {!PRO_ENFORCED ? (
+            <View style={[styles.freeCard, { backgroundColor: c.backgroundElement, borderColor: c.primary }]}>
+              <Ionicons name="gift-outline" size={22} color={c.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: c.text, fontWeight: '700', fontSize: 15 }}>Şu an hepsi ücretsiz</Text>
+                <Text style={{ color: c.textSecondary, fontSize: 13 }}>
+                  Pro satışa çıkana kadar aşağıdaki tüm özellikler herkese açık. Sınırsız eşleş, istediğin kadar etkinlik aç.
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           <View style={{ gap: Spacing.three }}>
             {FEATURES.map((f) => (
               <View key={f.title} style={styles.featureRow}>
@@ -93,6 +126,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     padding: Spacing.three,
+  },
+  freeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: Spacing.three,
+    marginBottom: Spacing.three,
   },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   featureIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

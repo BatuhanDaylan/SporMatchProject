@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { supabase } from '@/lib/supabase';
 import { unregisterPushToken } from '@/lib/push';
+import { queryClient } from '@/lib/queryClient';
 
 type AuthContextValue = {
   /** Oturum hazır olana kadar true (splash göstermek için). */
@@ -21,10 +22,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    // Hesap değişince (çıkış ya da başka hesapla giriş) önbelleği boşalt: önceki kullanıcının
+    // sohbetleri/istekleri yeni kullanıcıya görünmesin. Token yenilemede (aynı kullanıcı) dokunma.
+    let currentUid: string | null | undefined; // undefined = henüz bilinmiyor
+    const trackUser = (s: Session | null) => {
+      const uid = s?.user?.id ?? null;
+      if (currentUid !== undefined && uid !== currentUid) queryClient.clear();
+      currentUid = uid;
+    };
+
     // 1) Kalıcı oturumu yükle
     supabase.auth
       .getSession()
       .then(({ data }) => {
+        trackUser(data.session);
         setSession(data.session);
         // Realtime soketini yetkilendir (RLS'li postgres_changes için şart)
         supabase.realtime.setAuth(data.session?.access_token ?? null);
@@ -36,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 2) Değişiklikleri dinle (giriş/çıkış/token yenileme)
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      trackUser(s);
       setSession(s);
       supabase.realtime.setAuth(s?.access_token ?? null);
     });

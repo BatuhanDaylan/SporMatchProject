@@ -1,6 +1,8 @@
+import { getErrorMessage } from '@/lib/errorMessage';
+
 /** Supabase auth hatalarını kullanıcı diline çevirir. */
 export function mapAuthError(e: unknown): string {
-  const msg = e instanceof Error ? e.message : String(e);
+  const msg = getErrorMessage(e);
   if (/invalid login credentials/i.test(msg)) return 'E-posta veya parola hatalı.';
   if (/user already registered/i.test(msg)) return 'Bu e-posta zaten kayıtlı.';
   if (/password should be at least/i.test(msg)) return 'Parola en az 6 karakter olmalı.';

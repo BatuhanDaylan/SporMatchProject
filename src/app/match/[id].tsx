@@ -3,6 +3,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 
 import { displayName } from '@/lib/displayName';
+import { getErrorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/store/alert';
 import { MapView } from '@/components/map-view';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -107,11 +109,23 @@ export default function MatchScreen() {
             <Text style={{ color: c.textSecondary, textAlign: 'center', marginBottom: Spacing.one }}>
               İki taraf da onaylayınca tam konumlarınız paylaşılacak.
             </Text>
-            <Button title="Onayla" onPress={() => confirm.mutate(id)} loading={confirm.isPending} />
+            <Button
+              title="Onayla"
+              onPress={() => confirm.mutate(id, { onError: (e) => showAlert('Onaylanamadı', getErrorMessage(e)) })}
+              loading={confirm.isPending}
+              disabled={decline.isPending}
+            />
             <Button
               title="Reddet"
               variant="secondary"
-              onPress={() => decline.mutate(id, { onSuccess: () => router.replace('/(tabs)/match') })}
+              loading={decline.isPending}
+              disabled={confirm.isPending}
+              onPress={() =>
+                decline.mutate(id, {
+                  onSuccess: () => router.replace('/(tabs)/match'),
+                  onError: (e) => showAlert('Reddedilemedi', getErrorMessage(e)),
+                })
+              }
             />
           </View>
         )

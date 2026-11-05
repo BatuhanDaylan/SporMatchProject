@@ -18,6 +18,8 @@ export type Conversation = {
   last_from_me?: boolean | null;
   /** Son mesaj karşı tarafça okundu mu? */
   last_read?: boolean | null;
+  /** Son mesaj karşı tarafa iletildi mi (bildirim gitti ya da okundu)? */
+  last_delivered?: boolean | null;
   unread: number;
 };
 
@@ -27,8 +29,17 @@ export type Message = {
   sender_id: string;
   body: string;
   read_at: string | null;
+  /** Karşı tarafa bildirim gönderildiği an (✓✓ gri). */
+  delivered_at?: string | null;
   created_at: string;
 };
+
+/** Mesaj durumu: ✓ gönderildi · ✓✓ iletildi (gri) · ✓✓ okundu (mavi). */
+export function tickState(read: boolean, delivered: boolean) {
+  if (read) return { icon: 'checkmark-done', read: true, label: 'Okundu' } as const;
+  if (delivered) return { icon: 'checkmark-done', read: false, label: 'İletildi' } as const;
+  return { icon: 'checkmark', read: false, label: 'Gönderildi' } as const;
+}
 
 export async function fetchConversations() {
   const { data, error } = await supabase.rpc('list_conversations');

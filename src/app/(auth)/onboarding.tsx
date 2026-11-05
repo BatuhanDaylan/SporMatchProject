@@ -47,12 +47,13 @@ export default function OnboardingScreen() {
     mutationFn: async () => {
       if (!user) throw new Error('Oturum yok.');
 
+      // "Profil tamamlandı" işareti EN SONDA konur: sporlar kaydedilemezse kullanıcı
+      // onboarding'de kalır ve tekrar deneyebilir (yarım profille sekmelere geçmez).
       const { error: pErr } = await supabase.from('profiles').upsert({
         id: user.id,
         username: username.trim(),
         display_name: displayName.trim() || username.trim(),
         level,
-        onboarded: true,
       });
       if (pErr) throw pErr;
 
@@ -69,6 +70,9 @@ export default function OnboardingScreen() {
         const { error: iErr } = await supabase.from('user_sports').insert(rows);
         if (iErr) throw iErr;
       }
+
+      const { error: oErr } = await supabase.from('profiles').update({ onboarded: true }).eq('id', user.id);
+      if (oErr) throw oErr;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['profile'] });
@@ -103,7 +107,7 @@ export default function OnboardingScreen() {
 
       <TextField
         label="Kullanıcı adı"
-        placeholder="ör. batuhan_23"
+        placeholder="ör. sporcu_23"
         autoCapitalize="none"
         value={username}
         onChangeText={setUsername}
