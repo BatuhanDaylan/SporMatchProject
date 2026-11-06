@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
+import { SportFilter } from '@/components/sport-filter';
+import { useRefresh } from '@/hooks/useRefresh';
 import { displayName } from '@/lib/displayName';
 import { AsyncState } from '@/components/ui/async-state';
 import { Avatar } from '@/components/ui/avatar';
@@ -37,6 +39,10 @@ export default function ProgramsScreen() {
   const { data: stats } = useProfileStats();
   const { data: sports } = useSports();
   const active = mode === 'mine' ? mine : saved;
+  const [sportId, setSportId] = useState<string | null>(null);
+  const mineList = (mine.data ?? []).filter((p) => !sportId || p.sport_id === sportId);
+  const savedList = (saved.data ?? []).filter((p) => !sportId || p.sport_id === sportId);
+  const refresh = useRefresh();
 
   const sportIcon = useMemo(() => {
     const byId = new Map((sports ?? []).map((s) => [s.id, s.icon]));
@@ -107,26 +113,29 @@ export default function ProgramsScreen() {
       {/* Programlarım / Kaydettiklerim */}
       <TourTarget id="programs.list" style={{ flex: 1, gap: Spacing.three }}>
       <Segment value={mode} onChange={setMode} options={SEGMENT_OPTIONS} />
+      {(active.data?.length ?? 0) > 0 ? <SportFilter value={sportId} onChange={setSportId} /> : null}
 
       <AsyncState
         isLoading={active.isLoading}
         isError={active.isError}
         onRetry={active.refetch}
-        isEmpty={(active.data?.length ?? 0) === 0}
+        isEmpty={(mode === 'mine' ? mineList : savedList).length === 0}
         empty={{
           icon: mode === 'mine' ? 'barbell-outline' : 'bookmark-outline',
-          title: mode === 'mine' ? 'Henüz programın yok' : 'Kaydettiğin yok',
-          text:
-            mode === 'mine'
+          title: sportId ? 'Bu sporda program yok' : mode === 'mine' ? 'Henüz programın yok' : 'Kaydettiğin yok',
+          text: sportId
+            ? 'Başka bir spor seç ya da "Tümü"ne dön.'
+            : mode === 'mine'
               ? 'İlk antrenman programını oluştur; günler, egzersizler ve kendi alanlarını ekle.'
               : "Keşfet'te beğendiğin programları kaydet; burada toplanır.",
-          action: mode === 'mine' ? <Button title="Program Oluştur" onPress={() => router.push('/program/edit')} /> : undefined,
+          action: mode === 'mine' && !sportId ? <Button title="Program Oluştur" onPress={() => router.push('/program/edit')} /> : undefined,
         }}>
         {mode === 'mine' ? (
           <FlatList
-            data={mine.data}
+            data={mineList}
             keyExtractor={(p) => p.id}
             contentContainerStyle={{ gap: Spacing.two, paddingBottom: BottomTabInset }}
+            refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
             renderItem={({ item }) => (
               <ProgramCard
                 program={item}
@@ -137,9 +146,10 @@ export default function ProgramsScreen() {
           />
         ) : (
           <FlatList
-            data={saved.data}
+            data={savedList}
             keyExtractor={(p) => p.id}
             contentContainerStyle={{ gap: Spacing.two, paddingBottom: BottomTabInset }}
+            refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
             renderItem={({ item }) => <SavedCard program={item} onPress={() => router.push(`/program/${item.id}`)} />}
           />
         )}

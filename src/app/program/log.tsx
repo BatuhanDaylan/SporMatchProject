@@ -127,14 +127,14 @@ export default function LogWorkoutScreen() {
 
   if (!program) {
     return (
-      <Screen center>
+      <Screen center hasHeader>
         <Loading />
       </Screen>
     );
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Antrenman Kaydet' }} />
 
       <Text style={[styles.intro, { color: c.textSecondary }]}>

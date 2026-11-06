@@ -9,6 +9,7 @@ export type FeedPost = {
   body: string | null;
   image_url: string | null;
   created_at: string;
+  edited_at: string | null;
   author_id: string;
   hidden_at: string | null;
   like_count: number;
@@ -18,15 +19,16 @@ export type FeedPost = {
   author: { username: string | null; display_name: string | null; avatar_url: string | null } | null;
 };
 
-/** Aktivite akışı (son gönderiler) veya belirli kullanıcının gönderileri. */
-export function useFeed(authorId?: string) {
+/** Aktivite akışı (son gönderiler), belirli kullanıcının gönderileri ya da bir #etiketin gönderileri. */
+export function useFeed(authorId?: string, tag?: string) {
   return useQuery({
-    queryKey: ['feed', authorId ?? 'all'],
+    queryKey: ['feed', authorId ?? 'all', tag ?? ''],
     staleTime: 20_000,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('feed_posts', {
         p_limit: 50,
         p_author: authorId ?? null,
+        p_tag: tag ?? null,
       });
       if (error) throw error;
       return (data ?? []) as unknown as FeedPost[];
@@ -68,6 +70,16 @@ export function useFeedActions() {
     onSuccess: invalidate,
   });
 
+  /** Yalnız metin düzenlenir (fotoğraf değişmez). */
+  const editPost = useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: string }) => {
+      assertClean(body);
+      const { error } = await supabase.from('posts').update({ body: body.trim() || null }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const deletePost = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('posts').delete().eq('id', id);
@@ -95,5 +107,5 @@ export function useFeedActions() {
     onSuccess: invalidate,
   });
 
-  return { createPost, deletePost, toggleLike };
+  return { createPost, editPost, deletePost, toggleLike };
 }

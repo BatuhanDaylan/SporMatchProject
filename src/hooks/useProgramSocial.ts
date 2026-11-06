@@ -71,7 +71,7 @@ export function useSavedPrograms() {
       const { data, error } = await supabase
         .from('program_saves')
         .select(
-          'created_at, program:programs!inner(id,title,description,owner_id,visibility,template,updated_at,' +
+          'created_at, program:programs!inner(id,title,description,owner_id,visibility,template,updated_at,sport_id,' +
             'owner:profiles!programs_owner_id_fkey(username,display_name,avatar_url),' +
             'sport:sports!programs_sport_id_fkey(name,icon))',
         )

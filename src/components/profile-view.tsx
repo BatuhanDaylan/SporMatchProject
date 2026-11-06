@@ -1,7 +1,9 @@
-import { type ReactNode } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
+import { ImageViewer } from '@/components/ui/image-viewer';
 import { WorkoutHeatmap } from '@/components/workout-heatmap';
 import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
@@ -33,6 +35,8 @@ type Props = {
   headerAction?: ReactNode;
   /** Alt aksiyonlar (Düzenle/Çıkış vb.). */
   footer?: ReactNode;
+  /** Gizli hesap ve takipçi değilsin: antrenman geçmişi gösterilmez. */
+  locked?: boolean;
 };
 
 /** Kendi ve başka kullanıcıların profillerinde ortak kullanılan görsel profil. */
@@ -56,8 +60,10 @@ export function ProfileView({
   onOpenFollowing,
   headerAction,
   footer,
+  locked,
 }: Props) {
   const c = useColors();
+  const [viewer, setViewer] = useState<string | null>(null);
   const earnedCount = badges.filter((b) => b.unlocked).length;
 
   const pills = [
@@ -71,12 +77,18 @@ export function ProfileView({
       {/* Başlık kartı */}
       <TourTarget id="profile.card" style={[styles.card, styles.headerCard, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
         <View style={styles.identity}>
-          <Avatar name={name} url={avatarUrl ?? null} size={80} />
+          <Pressable
+            onPress={() => avatarUrl && setViewer(avatarUrl)}
+            disabled={!avatarUrl}
+            accessibilityRole="imagebutton"
+            accessibilityLabel="Profil fotoğrafını büyüt">
+            <Avatar name={name} url={avatarUrl ?? null} size={80} />
+          </Pressable>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[styles.name, { color: c.text }]} numberOfLines={2}>
               {name}
             </Text>
-            {username ? <Text style={{ color: c.textSecondary }}>@{username}</Text> : null}
+            {username ? <Text style={{ color: c.textSecondary }} selectable>@{username}</Text> : null}
           </View>
         </View>
 
@@ -90,7 +102,7 @@ export function ProfileView({
           </View>
         ) : null}
 
-        {bio ? <Text style={[styles.bio, { color: c.text }]}>{bio}</Text> : null}
+        {bio ? <Text selectable style={[styles.bio, { color: c.text }]}>{bio}</Text> : null}
 
         {followInfo ? (
           <View style={styles.followRow}>
@@ -120,7 +132,7 @@ export function ProfileView({
             { v: stats.programs, l: 'Program' },
             { v: stats.workouts, l: 'Antrenman' },
             { v: stats.matches, l: 'Eşleşme' },
-            { v: stats.comments, l: 'Yorum' },
+            { v: stats.likes ?? 0, l: 'Beğeni' },
           ].map((s, i) => (
             <View
               key={s.l}
@@ -154,8 +166,18 @@ export function ProfileView({
       </Section>
       </TourTarget>
 
+      {locked ? (
+        <View style={[styles.card, styles.lockCard, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+          <Ionicons name="lock-closed" size={26} color={c.textSecondary} />
+          <Text style={{ color: c.text, fontWeight: '700', fontSize: 16 }}>Bu hesap gizli</Text>
+          <Text style={{ color: c.textSecondary, textAlign: 'center' }}>
+            Gönderilerini, programlarını ve antrenman geçmişini görmek için takip et; isteğin onaylanınca görünür.
+          </Text>
+        </View>
+      ) : null}
+
       {/* Antrenman ısı-haritası */}
-      {userId ? (
+      {userId && !locked ? (
         <TourTarget id="profile.heatmap" style={[styles.card, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
           <WorkoutHeatmap userId={userId} />
         </TourTarget>
@@ -189,6 +211,7 @@ export function ProfileView({
       ) : null}
 
       {footer}
+      <ImageViewer uri={viewer} onClose={() => setViewer(null)} />
     </>
   );
 }
@@ -244,6 +267,7 @@ function TagRow({ items, c }: { items: string[]; c: ReturnType<typeof useColors>
 const styles = StyleSheet.create({
   card: { borderRadius: 20, borderWidth: 1, padding: Spacing.three, ...Elevation.card },
   headerCard: { gap: Spacing.three },
+  lockCard: { alignItems: 'center', gap: Spacing.two },
   identity: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   name: { fontSize: 22, fontWeight: '800' },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },

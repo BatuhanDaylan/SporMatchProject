@@ -17,7 +17,7 @@ export default function BadgesScreen() {
   const earned = badges.filter((b) => b.unlocked).length;
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Rozetler' }} />
 
       {isLoading || !stats ? (

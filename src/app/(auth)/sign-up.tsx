@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
@@ -10,11 +10,11 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/lib/auth';
 import { mapAuthError } from '@/lib/authErrors';
 import { Spacing } from '@/constants/theme';
-import { PRIVACY_URL, TERMS_URL } from '@/constants/legal';
 
 export default function SignUpScreen() {
   const c = useColors();
   const { signUp } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [accepted, setAccepted] = useState(false);
@@ -82,11 +82,11 @@ export default function SignUpScreen() {
         />
         <Text style={[styles.acceptText, { color: c.textSecondary }]}>
           18 yaşından büyüğüm ve{' '}
-          <Text style={{ color: c.primary }} onPress={() => Linking.openURL(TERMS_URL)}>
+          <Text style={{ color: c.primary }} onPress={() => router.push('/legal/sartlar')}>
             Kullanım Şartları
           </Text>{' '}
           ile{' '}
-          <Text style={{ color: c.primary }} onPress={() => Linking.openURL(PRIVACY_URL)}>
+          <Text style={{ color: c.primary }} onPress={() => router.push('/legal/gizlilik')}>
             Gizlilik Politikası
           </Text>
           ’nı kabul ediyorum.

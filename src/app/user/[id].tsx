@@ -45,6 +45,22 @@ export default function PublicProfileScreen() {
   const { block, unblock, sendReport } = useModeration();
   const follow = useFollow(id);
   const following = follow.data?.is_following ?? false;
+  const requested = follow.data?.requested ?? false;
+  const followBusy = follow.follow.isPending || follow.unfollow.isPending || follow.cancelRequest.isPending;
+
+  function onFollowPress() {
+    const onError = (e: unknown) => showAlert('Hata', getErrorMessage(e));
+    if (following) {
+      showAlert('Takibi bırak', `${name} kişisini takip etmeyi bırakmak istiyor musun?`, [
+        { text: 'Vazgeç', style: 'cancel' },
+        { text: 'Takibi bırak', style: 'destructive', onPress: () => follow.unfollow.mutate(undefined, { onError }) },
+      ]);
+    } else if (requested) {
+      follow.cancelRequest.mutate(undefined, { onError });
+    } else {
+      follow.follow.mutate(undefined, { onError });
+    }
+  }
   const [reportOpen, setReportOpen] = useState(false);
 
   const REPORT_REASONS = ['Uygunsuz fotoğraf', 'Uygunsuz içerik', 'Taciz', 'Spam', 'Sahte hesap', 'Diğer'];
@@ -113,7 +129,7 @@ export default function PublicProfileScreen() {
 
   if (isLoading) {
     return (
-      <Screen center>
+      <Screen center hasHeader>
         <Stack.Screen options={{ headerShown: true, title: 'Profil' }} />
         <Loading />
       </Screen>
@@ -121,7 +137,7 @@ export default function PublicProfileScreen() {
   }
   if (!profile) {
     return (
-      <Screen center>
+      <Screen center hasHeader>
         <Stack.Screen options={{ headerShown: true, title: 'Profil' }} />
         <EmptyState icon="person-outline" title="Profil bulunamadı" />
       </Screen>
@@ -129,7 +145,7 @@ export default function PublicProfileScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -159,26 +175,35 @@ export default function PublicProfileScreen() {
         badges={badges}
         onOpenBadges={() => router.push(`/badges?userId=${id}`)}
         followInfo={follow.data}
+        locked={!isMe && follow.data?.can_view === false}
         onOpenFollowers={() => router.push(`/follows?userId=${id}&tab=followers`)}
         onOpenFollowing={() => router.push(`/follows?userId=${id}&tab=following`)}
         headerAction={
           isMe || blocked ? null : (
             <Pressable
-              onPress={() => follow.toggle.mutate(following)}
-              disabled={follow.toggle.isPending}
-              style={[
+              onPress={onFollowPress}
+              disabled={followBusy}
+              accessibilityRole="button"
+              style={({ pressed }) => [
                 styles.followBtn,
-                following
+                following || requested
                   ? { backgroundColor: c.backgroundElement, borderColor: c.border, borderWidth: 1 }
                   : { backgroundColor: c.primary },
+                { opacity: pressed || followBusy ? 0.8 : 1 },
               ]}>
               <Ionicons
-                name={following ? 'checkmark' : 'person-add'}
+                name={following ? 'checkmark' : requested ? 'time-outline' : 'person-add'}
                 size={16}
-                color={following ? c.text : c.onPrimary}
+                color={following || requested ? c.text : c.onPrimary}
               />
-              <Text style={{ color: following ? c.text : c.onPrimary, fontWeight: '700' }}>
-                {following ? 'Takip Ediliyor' : 'Takip Et'}
+              <Text style={{ color: following || requested ? c.text : c.onPrimary, fontWeight: '700' }}>
+                {following
+                  ? 'Takip Ediliyor'
+                  : requested
+                    ? 'İstek gönderildi · geri çek'
+                    : follow.data?.is_private
+                      ? 'Takip isteği gönder'
+                      : 'Takip Et'}
               </Text>
             </Pressable>
           )

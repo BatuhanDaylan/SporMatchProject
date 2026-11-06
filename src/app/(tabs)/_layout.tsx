@@ -64,7 +64,8 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => <FloatingTabBar {...props} />}
-      screenOptions={{ headerShown: false }}>
+      // Sekmeler arası yumuşak geçiş
+      screenOptions={{ headerShown: false, animation: 'shift' }}>
       <Tabs.Screen
         name="index"
         options={{

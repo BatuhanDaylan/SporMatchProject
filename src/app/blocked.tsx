@@ -1,5 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 
 import { displayName } from '@/lib/displayName';
 import { AsyncState } from '@/components/ui/async-state';
@@ -11,18 +12,20 @@ import { Spacing } from '@/constants/theme';
 
 export default function BlockedScreen() {
   const c = useColors();
+  const refresh = useRefresh();
   const router = useRouter();
   const { data, isLoading } = useBlockedUsers();
   const { unblock } = useModeration();
 
   return (
-    <Screen>
+    <Screen hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Engellenenler' }} />
       <AsyncState
         isLoading={isLoading}
         isEmpty={(data?.length ?? 0) === 0}
         empty={{ icon: 'ban-outline', title: 'Engellenen yok', text: 'Kimseyi engellemedin.' }}>
         <FlatList
+          refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
           data={data}
           keyExtractor={(u) => u.id}
           contentContainerStyle={{ paddingVertical: Spacing.two, gap: Spacing.two }}

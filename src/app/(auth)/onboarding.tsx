@@ -11,6 +11,7 @@ import { useColors } from '@/hooks/useColors';
 import { useSports } from '@/hooks/useSports';
 import { useAuth } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/errorMessage';
+import { hasBannedWords, assertClean } from '@/lib/moderation';
 import { supabase } from '@/lib/supabase';
 import { Spacing } from '@/constants/theme';
 import type { SkillLevel } from '@/types/database';
@@ -85,6 +86,16 @@ export default function OnboardingScreen() {
     setError(null);
     if (!USERNAME_RE.test(username.trim())) {
       setError('Kullanıcı adı 3-20 karakter olmalı (harf, rakam, _).');
+      return;
+    }
+    if (hasBannedWords(username)) {
+      setError('Bu kullanıcı adı uygunsuz bir ifade içeriyor. Başka bir ad seç.');
+      return;
+    }
+    try {
+      assertClean(displayName);
+    } catch (e) {
+      setError(getErrorMessage(e));
       return;
     }
     if (!level) {

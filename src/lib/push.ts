@@ -53,10 +53,15 @@ export async function registerForPushNotifications(userId: string): Promise<stri
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     lastToken = token;
     if (__DEV__) console.log('📲 Expo push token:', token); // test için: expo.dev/notifications'a yapıştır
-    const { error } = await supabase
-      .from('push_tokens')
-      // updated_at her açılışta tazelenir: uzun süredir yenilenmeyen jeton "ölü" sayılır (✓✓ ve temizlik için)
-      .upsert({ token, user_id: userId, platform: Platform.OS, updated_at: new Date().toISOString() });
+    // Jeton cihaza aittir: aynı cihazda önce başka hesap açıldıysa sunucu jetonu bu hesaba devreder.
+    // (updated_at her açılışta tazelenir: uzun süredir yenilenmeyen jeton "ölü" sayılır.)
+    let { error } = await supabase.rpc('register_push_token', { p_token: token, p_platform: Platform.OS });
+    if (error && /register_push_token/.test(error.message)) {
+      // Sunucuda fonksiyon henüz yoksa eski yöntem
+      ({ error } = await supabase
+        .from('push_tokens')
+        .upsert({ token, user_id: userId, platform: Platform.OS, updated_at: new Date().toISOString() }));
+    }
     if (error) {
       console.warn('Push token kaydedilemedi:', error.message);
       return null;
@@ -100,6 +105,10 @@ export function routeForNotification(data: Record<string, unknown>): string | nu
       return '/chats';
     case 'follow':
       return data.user_id ? `/user/${data.user_id}` : null;
+    case 'follow_request':
+      return '/follow-requests';
+    case 'post_comment':
+      return data.post_id ? `/post/${data.post_id}` : '/feed';
     case 'match':
       return data.match_id ? `/match/${data.match_id}` : null;
     case 'comment':
@@ -107,7 +116,7 @@ export function routeForNotification(data: Record<string, unknown>): string | nu
     case 'event':
       return data.event_id ? `/event/${data.event_id}` : null;
     case 'post':
-      return '/feed';
+      return data.post_id ? `/post/${data.post_id}` : '/feed';
     default:
       return null;
   }

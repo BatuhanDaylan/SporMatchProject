@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 
 import { displayName } from '@/lib/displayName';
 import { AsyncState } from '@/components/ui/async-state';
@@ -30,6 +31,7 @@ const SEGMENT_OPTIONS = [
 
 export default function EventsScreen() {
   const c = useColors();
+  const refresh = useRefresh();
   const router = useRouter();
   const { data: profile } = useProfile();
   const [mode, setMode] = useState<Mode>('city');
@@ -85,6 +87,7 @@ export default function EventsScreen() {
           }}>
           {mode === 'city' ? (
             <FlatList
+              refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
               data={city.data}
               keyExtractor={(e) => e.id}
               contentContainerStyle={styles.list}
@@ -94,6 +97,7 @@ export default function EventsScreen() {
             />
           ) : (
             <FlatList
+              refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
               data={mine.data}
               keyExtractor={(e) => e.id}
               contentContainerStyle={styles.list}

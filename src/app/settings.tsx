@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { showAlert } from '@/store/alert';
 
@@ -16,7 +16,11 @@ import { useThemeStore, type ThemeMode } from '@/store/theme';
 import { useTourStore, type TourId } from '@/store/tour';
 import { TOUR_TITLES } from '@/components/tour/tours';
 import { Spacing } from '@/constants/theme';
-import { PRIVACY_URL, TERMS_URL } from '@/constants/legal';
+import { useFollowRequests } from '@/hooks/useFollow';
+import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 /** Ayarlar > Yardım'da listelenen turlar. */
 const HELP_TOURS: TourId[] = ['all', 'discover', 'match', 'program', 'chat', 'profile'];
@@ -34,6 +38,25 @@ export default function SettingsScreen() {
   const { mode, setMode } = useThemeStore();
   const { deleteAccount } = useModeration();
   const { data: isAdmin } = useIsAdmin();
+  const { data: profile } = useProfile();
+  const { data: requests } = useFollowRequests();
+  const qc = useQueryClient();
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
+  const isPrivate = !!profile?.is_private;
+
+  async function setPrivate(next: boolean) {
+    if (!profile) return;
+    setSavingPrivacy(true);
+    const { error } = await supabase.from('profiles').update({ is_private: next }).eq('id', profile.id);
+    setSavingPrivacy(false);
+    if (error) {
+      showAlert('Kaydedilemedi', getErrorMessage(error));
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ['profile'] });
+    qc.invalidateQueries({ queryKey: ['follow-info'] });
+    if (!next && (requests?.length ?? 0) > 0) showAlert('Hesabın açık', 'Bekleyen takip istekleri otomatik kabul edildi.');
+  }
 
   function confirmDelete() {
     showAlert(
@@ -58,7 +81,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Ayarlar' }} />
 
       {/* Tema */}
@@ -91,6 +114,32 @@ export default function SettingsScreen() {
       {/* Güvenlik */}
       <TourTarget id="settings.safety" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: c.text }]}>Gizlilik & Güvenlik</Text>
+        <View style={[styles.navRow, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+          <Ionicons name={isPrivate ? 'lock-closed-outline' : 'globe-outline'} size={20} color={c.text} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: c.text, fontSize: 16, fontWeight: '600' }}>Gizli hesap</Text>
+            <Text style={{ color: c.textSecondary, fontSize: 12 }}>
+              {isPrivate
+                ? 'Takip için onayın gerekir; gönderi, program ve antrenmanlarını yalnız takipçilerin görür.'
+                : 'Açık hesap: herkes doğrudan takip edebilir ve içeriğini görebilir.'}
+            </Text>
+          </View>
+          <Switch
+            value={isPrivate}
+            onValueChange={setPrivate}
+            disabled={savingPrivacy || !profile}
+            trackColor={{ true: c.primary }}
+            accessibilityLabel="Gizli hesap"
+          />
+        </View>
+        {isPrivate || (requests?.length ?? 0) > 0 ? (
+          <NavRow
+            icon="person-add-outline"
+            label={`Takip istekleri${requests?.length ? ` (${requests.length})` : ''}`}
+            c={c}
+            onPress={() => router.push('/follow-requests')}
+          />
+        ) : null}
         <NavRow
           icon="ban"
           label="Engellenen kullanıcılar"
@@ -106,13 +155,13 @@ export default function SettingsScreen() {
           icon="shield-checkmark-outline"
           label="Gizlilik Politikası"
           c={c}
-          onPress={() => Linking.openURL(PRIVACY_URL)}
+          onPress={() => router.push('/legal/gizlilik')}
         />
         <NavRow
           icon="document-text-outline"
           label="Kullanım Şartları"
           c={c}
-          onPress={() => Linking.openURL(TERMS_URL)}
+          onPress={() => router.push('/legal/sartlar')}
         />
       </View>
 

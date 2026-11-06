@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 
 import { AsyncState } from '@/components/ui/async-state';
 import { Badge } from '@/components/ui/badge';
@@ -27,12 +28,13 @@ const SEGMENT_OPTIONS = [
 
 export default function ChallengesScreen() {
   const c = useColors();
+  const refresh = useRefresh();
   const router = useRouter();
   const [scope, setScope] = useState<Scope>('active');
   const q = useChallenges(scope);
 
   return (
-    <Screen>
+    <Screen hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Meydan Okumalar' }} />
 
       <TourTarget id="challenges.tabs">
@@ -50,6 +52,7 @@ export default function ChallengesScreen() {
           text: 'İlk meydan okumayı sen başlat — hedefini koy, arkadaşların katılsın.',
         }}>
         <FlatList
+          refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
           data={q.data}
           keyExtractor={(ch) => ch.id}
           contentContainerStyle={{ gap: Spacing.two, paddingBottom: 96, paddingTop: Spacing.one }}

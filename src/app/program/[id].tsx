@@ -9,6 +9,8 @@ import { showAlert } from '@/store/alert';
 
 import { LineChart, type ChartPoint } from '@/components/chart/line-chart';
 import { CommentsSection } from '@/components/comments-section';
+import { ForkModal } from '@/components/fork-modal';
+import { RichText } from '@/components/ui/rich-text';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -24,7 +26,7 @@ import { useWorkoutLogs } from '@/hooks/useWorkoutLogs';
 import { useAuth } from '@/lib/auth';
 import { computePRs } from '@/lib/prs';
 import { Spacing } from '@/constants/theme';
-import type { LogEntry } from '@/types/program';
+import type { LogEntry, ProgramTemplate } from '@/types/program';
 
 const NUMERIC = new Set(['number', 'duration', 'distance']);
 
@@ -65,6 +67,7 @@ export default function ProgramDetailScreen() {
   }, [program]);
 
   const [metricKey, setMetricKey] = useState<string | null>(null);
+  const [forkOpen, setForkOpen] = useState(false);
   const activeMetric = metrics.find((m) => m.key === metricKey) ?? metrics[0];
 
   const prs = useMemo(
@@ -86,13 +89,16 @@ export default function ProgramDetailScreen() {
     return pts;
   }, [activeMetric, logs]);
 
-  async function onFork() {
+  async function onFork(template: ProgramTemplate) {
     if (!program) return;
     try {
-      const copy = await fork.mutateAsync(program);
-      router.replace(`/program/${copy.id}`);
+      await fork.mutateAsync({ src: program, template });
+      setForkOpen(false);
+      // Kopya, Programlarım listesinde görünsün
+      router.navigate('/(tabs)/programs');
+      showAlert('Kopyalandı ✅', `"${program.title}" Programlarım listene eklendi.`);
     } catch (e) {
-      showAlert('Hata', getErrorMessage(e));
+      showAlert('Kopyalanamadı', getErrorMessage(e));
     }
   }
 
@@ -103,8 +109,12 @@ export default function ProgramDetailScreen() {
         text: 'Sil',
         style: 'destructive',
         onPress: async () => {
-          await remove.mutateAsync(id);
-          router.back();
+          try {
+            await remove.mutateAsync(id);
+            router.back();
+          } catch (e) {
+            showAlert('Silinemedi', getErrorMessage(e));
+          }
         },
       },
     ]);
@@ -138,7 +148,7 @@ export default function ProgramDetailScreen() {
             <Text style={{ fontSize: 30 }}>{sportIcon ?? '📋'}</Text>
           </View>
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[styles.title, { color: c.text }]} numberOfLines={3}>
+            <Text selectable style={[styles.title, { color: c.text }]} numberOfLines={3}>
               {program.title}
             </Text>
             <Pressable
@@ -155,7 +165,7 @@ export default function ProgramDetailScreen() {
           </View>
         </View>
         {program.description ? (
-          <Text style={{ color: c.text, fontSize: 15, lineHeight: 21 }}>{program.description}</Text>
+          <RichText style={{ color: c.text, fontSize: 15, lineHeight: 21 }}>{program.description}</RichText>
         ) : null}
         <View style={styles.pills}>
           <View style={[styles.pill, { backgroundColor: c.background }]}>
@@ -244,14 +254,17 @@ export default function ProgramDetailScreen() {
         </View>
       ) : (
         <View style={styles.actions}>
-          <Button
-            title="Programı kopyala"
-            onPress={onFork}
-            loading={fork.isPending}
-          />
+          <Button title="Programı kopyala" onPress={() => setForkOpen(true)} loading={fork.isPending} />
           <Text style={{ color: c.textSecondary, fontSize: 12, textAlign: 'center' }}>
-            Kendi programına ekler; sonra antrenman kaydedip ilerlemeni takip edebilirsin.
+            Tamamını ya da yalnız istediğin günleri/egzersizleri Programlarım'a ekler.
           </Text>
+          <ForkModal
+            visible={forkOpen}
+            template={program.template}
+            loading={fork.isPending}
+            onClose={() => setForkOpen(false)}
+            onConfirm={onFork}
+          />
         </View>
       )}
 
@@ -307,8 +320,8 @@ export default function ProgramDetailScreen() {
             ) : (
               d.exercises.map((e) => (
                 <View key={e.id} style={styles.exRow}>
-                  <Text style={[styles.exName, { color: c.text }]}>{e.name || 'İsimsiz egzersiz'}</Text>
-                  <Text style={{ color: c.textSecondary, fontSize: 12 }}>
+                  <Text selectable style={[styles.exName, { color: c.text }]}>{e.name || 'İsimsiz egzersiz'}</Text>
+                  <Text selectable style={{ color: c.textSecondary, fontSize: 12 }}>
                     {e.fields
                       .map((f) =>
                         f.value !== undefined && f.value !== ''
@@ -320,7 +333,7 @@ export default function ProgramDetailScreen() {
                       .join(' · ') || 'alan yok'}
                   </Text>
                   {e.note ? (
-                    <Text style={{ color: c.textSecondary, fontSize: 12, fontStyle: 'italic', marginTop: 2 }}>
+                    <Text selectable style={{ color: c.textSecondary, fontSize: 12, fontStyle: 'italic', marginTop: 2 }}>
                       📝 {e.note}
                     </Text>
                   ) : null}
@@ -332,7 +345,7 @@ export default function ProgramDetailScreen() {
       )}
 
       <View style={[styles.section, { borderColor: c.border }]}>
-        <CommentsSection programId={id} canModerate={isOwner} />
+        <CommentsSection kind="program" targetId={id} canModerate={isOwner} />
       </View>
 
       <View style={{ height: Spacing.six }} />

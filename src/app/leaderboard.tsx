@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 
 import { displayName } from '@/lib/displayName';
 import { AsyncState } from '@/components/ui/async-state';
@@ -26,12 +27,13 @@ const SEGMENT_OPTIONS = [
 
 export default function LeaderboardScreen() {
   const c = useColors();
+  const refresh = useRefresh();
   const router = useRouter();
   const [scope, setScope] = useState<'all' | 'city'>('all');
   const { data, isLoading } = useLeaderboard(scope, 7);
 
   return (
-    <Screen>
+    <Screen hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Liderlik' }} />
 
       <Text style={{ color: c.textSecondary, fontSize: 13 }}>
@@ -70,6 +72,7 @@ export default function LeaderboardScreen() {
               : 'Bu hafta henüz antrenman kaydı yok.',
         }}>
         <FlatList
+          refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
           style={{ flex: 1 }}
           data={data}
           keyExtractor={(x) => x.user_id}

@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, RefreshControl, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 
 import { displayName } from '@/lib/displayName';
 import { AsyncState } from '@/components/ui/async-state';
@@ -19,6 +20,7 @@ const TAB_OPTIONS = [
 
 export default function FollowsScreen() {
   const c = useColors();
+  const refresh = useRefresh();
   const router = useRouter();
   const params = useLocalSearchParams<{ userId?: string; tab?: string }>();
   const [tab, setTab] = useState<'followers' | 'following'>(
@@ -34,7 +36,7 @@ export default function FollowsScreen() {
     : data;
 
   return (
-    <Screen>
+    <Screen hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Takip' }} />
 
       <Segment
@@ -77,6 +79,7 @@ export default function FollowsScreen() {
               }
         }>
         <FlatList
+          refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
           data={filtered}
           keyboardShouldPersistTaps="handled"
           keyExtractor={(u) => u.id}

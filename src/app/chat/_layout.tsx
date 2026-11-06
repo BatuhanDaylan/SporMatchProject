@@ -12,6 +12,8 @@ export default function ChatStackLayout() {
         headerTitleStyle: { fontWeight: '800' },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: c.background },
+        animation: 'slide_from_right',
+        animationDuration: 250,
         title: 'Sohbet',
       }}
     />

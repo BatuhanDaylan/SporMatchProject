@@ -69,6 +69,8 @@ export type EventDetail = {
   participant_count: number;
   joined: boolean;
   is_host: boolean;
+  /** Sahibi tarafından çıkarıldı (tekrar katılamaz). */
+  banned?: boolean;
   host: MiniProfile | null;
   sport: MiniSport;
   participants: MiniProfile[];
@@ -223,7 +225,16 @@ export function useEventActions(eventId?: string) {
     onSuccess: invalidate,
   });
 
-  return { join, leave, cancelEvent };
+  /** Etkinlik sahibi bir katılımcıyı çıkarır (o kişi tekrar katılamaz). */
+  const removeParticipant = useMutation({
+    mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+      const { error } = await supabase.rpc('remove_event_participant', { p_event_id: eventId, p_user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  return { join, leave, cancelEvent, removeParticipant };
 }
 
 export type CreateEventInput = {

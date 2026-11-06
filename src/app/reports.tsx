@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 
 import { displayName } from '@/lib/displayName';
 import { showAlert } from '@/store/alert';
@@ -17,6 +18,7 @@ import { Spacing } from '@/constants/theme';
 
 export default function ReportsScreen() {
   const c = useColors();
+  const refresh = useRefresh();
   const router = useRouter();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data, isLoading, isError, refetch, setCommentHidden, clearAvatar, setPostHidden, setPostCommentHidden } =
@@ -34,7 +36,7 @@ export default function ReportsScreen() {
   // Yönetici değilse içerik gösterme.
   if (!adminLoading && !isAdmin) {
     return (
-      <Screen>
+      <Screen hasHeader>
         {header}
         <EmptyState icon="lock-closed-outline" title="Erişim yok" text="Bu bölüm yalnızca yöneticilere açıktır." />
       </Screen>
@@ -42,7 +44,7 @@ export default function ReportsScreen() {
   }
 
   return (
-    <Screen>
+    <Screen hasHeader>
       {header}
       {isLoading || adminLoading ? (
         <Loading />
@@ -52,6 +54,7 @@ export default function ReportsScreen() {
         <EmptyState icon="shield-checkmark-outline" title="Şikayet yok" text="Bekleyen şikayet bulunmuyor." />
       ) : (
         <FlatList
+          refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
           data={data}
           keyExtractor={(r) => r.id}
           contentContainerStyle={{ paddingVertical: Spacing.two, gap: Spacing.two }}

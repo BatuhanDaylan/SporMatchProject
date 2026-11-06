@@ -13,6 +13,7 @@ export type DiscoverProgram = {
   visibility: 'public' | 'private';
   template: ProgramTemplate;
   updated_at: string;
+  sport_id?: string | null;
   owner: { username: string | null; display_name: string | null; avatar_url: string | null } | null;
   sport: { name: string; icon: string | null } | null;
   like_count?: number;
@@ -25,16 +26,18 @@ export type DiscoverProgram = {
  * Herkese açık programlar akışı — sıralama/filtre RPC'siyle.
  * @param sort 'recent' | 'liked' | 'saved' | 'hit'
  * @param periodDays 'hit' için pencere (gün)
+ * @param sportId yalnız bu sporun programları (null: hepsi)
  */
-export function useDiscoverPrograms(sort: DiscoverSort = 'recent', periodDays = 7) {
+export function useDiscoverPrograms(sort: DiscoverSort = 'recent', periodDays = 7, sportId: string | null = null) {
   return useQuery({
-    queryKey: ['discover', 'programs', sort, periodDays],
+    queryKey: ['discover', 'programs', sort, periodDays, sportId ?? 'all'],
     staleTime: 20_000,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_programs', {
         p_sort: sort,
         p_period_days: periodDays,
         p_limit: 50,
+        p_sport_id: sportId,
       });
       if (error) throw error;
       return ((data as unknown as DiscoverProgram[]) ?? []).map((p) => ({

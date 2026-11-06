@@ -7,6 +7,7 @@ import { getErrorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/store/alert';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { CalendarField } from '@/components/ui/calendar-field';
 import { LocationPickerModal } from '@/components/location-picker-modal';
 import { MapView } from '@/components/map-view';
@@ -28,13 +29,28 @@ import { FormSection, Spacing } from '@/constants/theme';
 // Konum alınamazsa başlangıç merkezi (İstanbul).
 const FALLBACK = { lat: 41.0082, lng: 28.9784 };
 
-/** Varsayılan saat: 1 saat sonrası. */
-function defaultTime(): { hour: number; minute: number } {
-  const t = new Date(Date.now() + 60 * 60 * 1000);
-  return { hour: t.getHours(), minute: t.getMinutes() };
+/** Etkinlik en erken bu kadar dakika sonra başlayabilir (şu an/geçmiş seçilemez). */
+const MIN_LEAD_MIN = 15;
+
+/** Seçilebilecek en erken an: şimdi + 15 dk, 5 dakikaya yuvarlanmış. */
+function earliestStart(): Date {
+  const t = new Date(Date.now() + MIN_LEAD_MIN * 60 * 1000);
+  t.setSeconds(0, 0);
+  t.setMinutes(Math.ceil(t.getMinutes() / 5) * 5);
+  return t;
 }
 
-const CAPACITIES: (number | null)[] = [null, 2, 4, 6, 10, 20];
+/** Varsayılan: 1 saat sonrası, 15 dakikaya yuvarlanmış. */
+function defaultStart(): Date {
+  const t = new Date(Date.now() + 60 * 60 * 1000);
+  t.setSeconds(0, 0);
+  t.setMinutes(Math.ceil(t.getMinutes() / 15) * 15);
+  return t;
+}
+
+const QUICK_CAPACITIES = [2, 4, 6, 10, 20];
+const MIN_CAPACITY = 2;
+const MAX_CAPACITY = 500;
 
 export default function CreateEventScreen() {
   const c = useColors();
@@ -44,13 +60,18 @@ export default function CreateEventScreen() {
   const create = useCreateEvent();
 
   const mySports = useMySports(profile, sports);
+  // Önce kendi sporların, sonra diğerleri (yapmadığın bir spor için de etkinlik açabilirsin)
+  const sportOptions = [...mySports, ...(sports ?? []).filter((s) => !mySports.some((m) => m.id === s.id))];
 
   const [title, setTitle] = useState('');
   const [placeName, setPlaceName] = useState('');
   const [description, setDescription] = useState('');
   const [sportId, setSportId] = useState<string | null>(null);
-  const [eventDate, setEventDate] = useState(() => startOfDay(new Date()));
-  const [{ hour, minute }, setTime] = useState(defaultTime);
+  const [eventDate, setEventDate] = useState(() => startOfDay(defaultStart()));
+  const [{ hour, minute }, setTime] = useState(() => {
+    const d = defaultStart();
+    return { hour: d.getHours(), minute: d.getMinutes() };
+  });
   const [capacity, setCapacity] = useState<number | null>(null);
   const [center, setCenter] = useState(FALLBACK);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -80,6 +101,20 @@ export default function CreateEventScreen() {
     setDistrict((d) => d ?? profile.district ?? null);
   }, [profile]);
 
+  // Bugün seçiliyse saat listesi şu andan (15 dk sonrasından) başlar
+  const earliest = earliestStart();
+  const isEarliestDay = startOfDay(earliest).getTime() === eventDate.getTime();
+  const minTime = isEarliestDay ? { hour: earliest.getHours(), minute: earliest.getMinutes() } : null;
+
+  function onChangeDate(d: Date) {
+    setEventDate(d);
+    // Bugüne dönüldüyse ve seçili saat geçmişte kaldıysa en erken saate çek
+    const e = earliestStart();
+    if (startOfDay(e).getTime() === d.getTime() && (hour < e.getHours() || (hour === e.getHours() && minute < e.getMinutes()))) {
+      setTime({ hour: e.getHours(), minute: e.getMinutes() });
+    }
+  }
+
   function buildStartsAt(): Date {
     const d = new Date(eventDate);
     d.setHours(hour, minute, 0, 0);
@@ -100,8 +135,8 @@ export default function CreateEventScreen() {
       return;
     }
     const startsAt = buildStartsAt();
-    if (startsAt.getTime() < Date.now() - 5 * 60 * 1000) {
-      showAlert('Zaman', 'Geçmiş bir zaman seçemezsin.');
+    if (startsAt.getTime() < Date.now() + 10 * 60 * 1000) {
+      showAlert('Zaman', 'Seçtiğin saat çok yakın ya da geçmişte kaldı. İleri bir saat seç.');
       return;
     }
     const point = coords;
@@ -150,22 +185,16 @@ export default function CreateEventScreen() {
       </TourTarget>
 
       <TourTarget id="event.sport">
-      {mySports.length === 0 ? (
-        <FieldLabel text="Spor">
-          <Text style={{ color: c.textSecondary, fontSize: 13 }}>
-            Profilinden spor eklersen burada seçebilirsin (isteğe bağlı).
-          </Text>
-        </FieldLabel>
-      ) : (
+      {(
         <WheelField
           label="Spor"
           title="Spor seç"
           icon="basketball-outline"
-          items={[null, ...mySports.map((s) => s.id)]}
+          items={[null, ...sportOptions.map((s) => s.id)]}
           value={sportId}
           renderLabel={(id) => {
             if (id === null) return 'Seçilmedi';
-            const s = mySports.find((x) => x.id === id);
+            const s = sportOptions.find((x) => x.id === id);
             return s ? `${s.icon ?? ''} ${s.name}`.trim() : 'Seçilmedi';
           }}
           onChange={setSportId}
@@ -174,21 +203,43 @@ export default function CreateEventScreen() {
       </TourTarget>
 
       <TourTarget id="event.when" style={{ gap: Spacing.three }}>
-      <CalendarField label="Gün" value={eventDate} onChange={setEventDate} />
+      <CalendarField label="Gün" value={eventDate} minDate={startOfDay(earliest)} onChange={onChangeDate} />
 
-      <TimeField label="Saat" hour={hour} minute={minute} onChange={(h, m) => setTime({ hour: h, minute: m })} />
+      <TimeField
+        label="Saat"
+        hour={hour}
+        minute={minute}
+        min={minTime}
+        onChange={(h, m) => setTime({ hour: h, minute: m })}
+      />
       </TourTarget>
 
       <TourTarget id="event.capacity">
-      <WheelField
-        label="Kontenjan"
-        title="Kontenjan seç"
-        icon="people-outline"
-        items={CAPACITIES}
-        value={capacity}
-        renderLabel={(n) => (n === null ? 'Sınırsız' : `${n} kişi`)}
-        onChange={setCapacity}
-      />
+      <FieldLabel text="Kişi sayısı">
+        <View style={styles.capChips}>
+          <Chip label="Sınırsız" selected={capacity === null} onPress={() => setCapacity(null)} />
+          {QUICK_CAPACITIES.map((n) => (
+            <Chip key={n} label={String(n)} selected={capacity === n} onPress={() => setCapacity(n)} />
+          ))}
+        </View>
+        <View style={[styles.stepper, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>
+          <Pressable
+            onPress={() => setCapacity((n) => (n === null || n <= MIN_CAPACITY ? null : n - 1))}
+            style={[styles.stepBtn, { backgroundColor: c.background }]}
+            accessibilityRole="button"
+            accessibilityLabel="Kişi sayısını azalt">
+            <Ionicons name="remove" size={22} color={c.text} />
+          </Pressable>
+          <Text style={[styles.stepValue, { color: c.text }]}>{capacity === null ? 'Sınırsız' : `${capacity} kişi`}</Text>
+          <Pressable
+            onPress={() => setCapacity((n) => (n === null ? MIN_CAPACITY : Math.min(MAX_CAPACITY, n + 1)))}
+            style={[styles.stepBtn, { backgroundColor: c.background }]}
+            accessibilityRole="button"
+            accessibilityLabel="Kişi sayısını artır">
+            <Ionicons name="add" size={22} color={c.text} />
+          </Pressable>
+        </View>
+      </FieldLabel>
       </TourTarget>
 
       <TextField
@@ -281,5 +332,9 @@ const styles = StyleSheet.create({
   section: FormSection,
   hint: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', padding: Spacing.two, borderRadius: 12, marginTop: Spacing.three },
   locBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: Spacing.two, marginTop: Spacing.two },
+  capChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 12, padding: 6, marginTop: Spacing.two },
+  stepBtn: { width: 44, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  stepValue: { fontSize: 16, fontWeight: '700' },
   locBtnBig: { alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderStyle: 'dashed', borderRadius: 14, paddingVertical: Spacing.four },
 });

@@ -12,6 +12,8 @@ export default function ProgramLayout() {
         headerTitleStyle: { fontWeight: '800' },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: c.background },
+        animation: 'slide_from_right',
+        animationDuration: 250,
       }}>
       <Stack.Screen name="[id]" options={{ title: 'Program' }} />
       <Stack.Screen name="edit" options={{ title: 'Program Düzenle', presentation: 'modal' }} />

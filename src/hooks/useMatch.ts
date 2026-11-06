@@ -158,3 +158,37 @@ export function useMatchActions() {
   });
   return { confirm, decline };
 }
+
+export type MatchHistoryItem = {
+  match_id: string;
+  partner_id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  sport_name: string | null;
+  sport_icon: string | null;
+  distance_m: number | null;
+  status: 'pending' | 'confirmed' | 'declined' | 'expired';
+  conversation_id: string | null;
+  created_at: string;
+  i_confirmed: boolean;
+};
+
+/** Bir eşleşme "canlı" mı: son 24 saatte oluşmuş ve reddedilmemiş/süresi dolmamış. */
+export function isLiveMatch(m: MatchHistoryItem): boolean {
+  const fresh = Date.now() - new Date(m.created_at).getTime() < 24 * 60 * 60 * 1000;
+  return fresh && (m.status === 'pending' || m.status === 'confirmed');
+}
+
+/** Tüm eşleşmelerim (yeniden eskiye). */
+export function useMatchHistory() {
+  return useQuery({
+    queryKey: ['match-history'],
+    staleTime: 10_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('my_match_history', { p_limit: 100 });
+      if (error) throw error;
+      return (data as unknown as MatchHistoryItem[]) ?? [];
+    },
+  });
+}

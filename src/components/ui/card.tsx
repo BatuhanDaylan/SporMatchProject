@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import {
+  Animated,
   Pressable,
   StyleSheet,
   View,
@@ -10,6 +11,7 @@ import {
 } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
+import { usePressScale } from '@/hooks/usePressScale';
 import { Elevation } from '@/constants/theme';
 
 type Props = {
@@ -40,12 +42,17 @@ export function Card({
   accessibilityLabel,
 }: Props) {
   const c = useColors();
+  const press = usePressScale(0.98);
   const base = [styles.card, { backgroundColor: c.backgroundElement, borderColor: c.border }, elevated && Elevation.card, style];
 
   if (onPress) {
+    // Kartın dış ölçüsü (flex/margin) sarmalayıcıya geçer; basınca hafifçe küçülür
     return (
+      <Animated.View style={press.scaleStyle}>
       <Pressable
         onPress={onPress}
+        onPressIn={press.onPressIn}
+        onPressOut={press.onPressOut}
         disabled={disabled}
         hitSlop={hitSlop}
         accessibilityRole={accessibilityRole}
@@ -53,6 +60,7 @@ export function Card({
         style={({ pressed }) => [...base, { opacity: pressed ? 0.85 : 1 }]}>
         {children}
       </Pressable>
+      </Animated.View>
     );
   }
   return <View style={base}>{children}</View>;

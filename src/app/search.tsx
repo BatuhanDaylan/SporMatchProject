@@ -25,7 +25,7 @@ export default function SearchScreen() {
   const short = term.trim().length < 2;
 
   return (
-    <Screen>
+    <Screen hasHeader>
       <Stack.Screen options={{ headerShown: true, title: 'Ara' }} />
 
       <TourTarget id="search.input" style={[styles.searchBar, { backgroundColor: c.backgroundElement, borderColor: c.border }]}>

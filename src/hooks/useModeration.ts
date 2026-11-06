@@ -65,12 +65,9 @@ export function useBlockedUsers() {
 export function useModeration() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const invalidate = () => {
-    qc.invalidateQueries({ queryKey: ['is-blocked'] });
-    qc.invalidateQueries({ queryKey: ['blocked-users'] });
-    qc.invalidateQueries({ queryKey: ['discover'] });
-    qc.invalidateQueries({ queryKey: ['conversations'] });
-  };
+  // Engel her yeri etkiler (akış, etkinlikler, sohbetler, yorumlar, profiller): tüm veriyi tazele.
+  // Böylece engel kaldırılınca gizlenen etkinlik/gönderi de hemen geri gelir.
+  const invalidate = () => qc.invalidateQueries();
 
   const block = useMutation({
     mutationFn: async (userId: string) => {

@@ -1,12 +1,7 @@
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  type PressableProps,
-} from 'react-native';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, type PressableProps } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
+import { usePressScale } from '@/hooks/usePressScale';
 import { Elevation, Spacing } from '@/constants/theme';
 
 type Props = PressableProps & {
@@ -17,8 +12,9 @@ type Props = PressableProps & {
   size?: 'md' | 'lg';
 };
 
-export function Button({ title, loading, variant = 'primary', size = 'md', disabled, ...rest }: Props) {
+export function Button({ title, loading, variant = 'primary', size = 'md', disabled, onPressIn, onPressOut, ...rest }: Props) {
   const c = useColors();
+  const press = usePressScale();
   const isPrimary = variant === 'primary';
   const isLarge = size === 'lg';
   const bg = isPrimary ? c.primary : c.backgroundElement;
@@ -26,22 +22,32 @@ export function Button({ title, loading, variant = 'primary', size = 'md', disab
   const isDisabled = disabled || loading;
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={isDisabled}
-      style={({ pressed }) => [
-        styles.base,
-        isLarge && styles.large,
-        isPrimary && !isDisabled && styles.elevated,
-        { backgroundColor: bg, opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1 },
-      ]}
-      {...rest}>
-      {loading ? (
-        <ActivityIndicator color={fg} />
-      ) : (
-        <Text style={[styles.label, isLarge && styles.labelLarge, { color: fg }]}>{title}</Text>
-      )}
-    </Pressable>
+    <Animated.View style={press.scaleStyle}>
+      <Pressable
+        accessibilityRole="button"
+        disabled={isDisabled}
+        onPressIn={(e) => {
+          press.onPressIn();
+          onPressIn?.(e);
+        }}
+        onPressOut={(e) => {
+          press.onPressOut();
+          onPressOut?.(e);
+        }}
+        style={({ pressed }) => [
+          styles.base,
+          isLarge && styles.large,
+          isPrimary && !isDisabled && styles.elevated,
+          { backgroundColor: bg, opacity: isDisabled ? 0.5 : pressed ? 0.9 : 1 },
+        ]}
+        {...rest}>
+        {loading ? (
+          <ActivityIndicator color={fg} />
+        ) : (
+          <Text style={[styles.label, isLarge && styles.labelLarge, { color: fg }]}>{title}</Text>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 

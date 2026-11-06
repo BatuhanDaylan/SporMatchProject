@@ -27,6 +27,7 @@ export type Database = {
           availability: string[];
           onboarded: boolean;
           pro_until: string | null;
+          is_private: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -43,6 +44,7 @@ export type Database = {
           availability?: string[];
           onboarded?: boolean;
           pro_until?: string | null;
+          is_private?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -59,6 +61,7 @@ export type Database = {
           availability?: string[];
           onboarded?: boolean;
           pro_until?: string | null;
+          is_private?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -183,6 +186,8 @@ export type Database = {
           parent_id: string | null;
           body: string;
           created_at: string;
+          edited_at: string | null;
+          hidden_at: string | null;
         };
         Insert: {
           id?: string;
@@ -410,6 +415,7 @@ export type Database = {
           body: string | null;
           image_url: string | null;
           created_at: string;
+          edited_at: string | null;
         };
         Insert: {
           id?: string;
@@ -432,12 +438,32 @@ export type Database = {
           id: string;
           post_id: string;
           author_id: string;
+          parent_id: string | null;
           body: string;
           hidden_at: string | null;
           created_at: string;
+          edited_at: string | null;
         };
-        Insert: { id?: string; post_id: string; author_id: string; body: string; created_at?: string };
+        Insert: { id?: string; post_id: string; author_id: string; body: string; parent_id?: string | null; created_at?: string };
         Update: { body?: string; hidden_at?: string | null };
+        Relationships: [];
+      };
+      comment_likes: {
+        Row: { comment_id: string; user_id: string; created_at: string };
+        Insert: { comment_id: string; user_id: string; created_at?: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      post_comment_likes: {
+        Row: { comment_id: string; user_id: string; created_at: string };
+        Insert: { comment_id: string; user_id: string; created_at?: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      follow_requests: {
+        Row: { requester_id: string; target_id: string; created_at: string };
+        Insert: { requester_id: string; target_id: string; created_at?: string };
+        Update: Record<string, never>;
         Relationships: [];
       };
     };
@@ -457,7 +483,7 @@ export type Database = {
       my_pending_matches: { Args: Record<string, never>; Returns: Json };
       get_profile_stats: { Args: { p_user_id?: string }; Returns: Json };
       discover_programs: {
-        Args: { p_sort?: string; p_period_days?: number; p_limit?: number };
+        Args: { p_sort?: string; p_period_days?: number; p_limit?: number; p_sport_id?: string | null };
         Returns: Json;
       };
       send_chat_request: { Args: { p_to: string }; Returns: Json };
@@ -507,7 +533,12 @@ export type Database = {
       leave_event: { Args: { p_event_id: string }; Returns: Json };
       my_events: { Args: Record<string, never>; Returns: Json };
       workout_heatmap: { Args: { p_user_id: string; p_days?: number }; Returns: Json };
-      feed_posts: { Args: { p_limit?: number; p_author?: string | null }; Returns: Json };
+      feed_posts: { Args: { p_limit?: number; p_author?: string | null; p_tag?: string | null }; Returns: Json };
+      follow_user: { Args: { p_target: string }; Returns: Json };
+      respond_follow_request: { Args: { p_requester: string; p_accept: boolean }; Returns: Json };
+      remove_event_participant: { Args: { p_event_id: string; p_user_id: string }; Returns: Json };
+      my_match_history: { Args: { p_limit?: number }; Returns: Json };
+      register_push_token: { Args: { p_token: string; p_platform: string }; Returns: undefined };
       create_challenge: {
         Args: {
           p_title: string;

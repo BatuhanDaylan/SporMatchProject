@@ -53,9 +53,11 @@ function RootNavigator() {
     SplashScreen.hideAsync();
 
     const inAuth = segments[0] === '(auth)';
+    // Yasal sayfalar oturum açmadan da okunabilir (kayıt ekranından açılır)
+    const isPublic = segments[0] === 'legal';
 
     if (!session) {
-      if (!inAuth) router.replace('/(auth)/sign-in');
+      if (!inAuth && !isPublic) router.replace('/(auth)/sign-in');
       return;
     }
 
@@ -76,7 +78,18 @@ function RootNavigator() {
     );
   }
 
-  return <Stack screenOptions={{ headerShown: false, headerTitleStyle: { fontWeight: '800' } }} />;
+  // Ekran geçişleri: sağdan kayarak (Android/iOS aynı, akıcı)
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerTitleStyle: { fontWeight: '800' },
+        animation: 'slide_from_right',
+        animationDuration: 250,
+        gestureEnabled: true,
+      }}
+    />
+  );
 }
 
 export default function RootLayout() {

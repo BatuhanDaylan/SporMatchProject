@@ -189,7 +189,7 @@ const Bubble = memo(function Bubble({ msg, mine }: { msg: Message; mine: boolean
           ? { backgroundColor: c.primary, alignSelf: 'flex-end', borderBottomRightRadius: 4 }
           : { backgroundColor: c.backgroundElement, alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
       ]}>
-      <Text style={{ color: mine ? c.onPrimary : c.text, fontSize: 15 }}>{msg.body}</Text>
+      <Text selectable style={{ color: mine ? c.onPrimary : c.text, fontSize: 15 }}>{msg.body}</Text>
       <View style={styles.meta}>
         <Text style={[styles.time, { color: mine ? c.onPrimary : c.textSecondary }]}>
           {new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}

@@ -32,14 +32,19 @@ type Props = {
   hour: number;
   minute: number;
   onChange: (hour: number, minute: number) => void;
+  /** Seçilebilecek en erken saat (ör. bugün için şu andan sonrası). Öncesi listede çıkmaz. */
+  min?: { hour: number; minute: number } | null;
 };
 
 /** Takvim alanıyla tutarlı: alan + modal içinde saat/dakika kaydırmalı çark seçici (seçenek listesi yok). */
-export function TimeField({ label, hour, minute, onChange }: Props) {
+export function TimeField({ label, hour, minute, onChange, min }: Props) {
   const c = useColors();
   const [open, setOpen] = useState(false);
   const [pendingH, setPendingH] = useState(hour);
   const [pendingM, setPendingM] = useState(minute);
+
+  const hours = min ? HOURS.filter((h) => h >= min.hour) : HOURS;
+  const minutes = min && pendingH === min.hour ? MINUTES.filter((m) => m >= min.minute) : MINUTES;
 
   function openModal() {
     setPendingH(hour);
@@ -47,7 +52,18 @@ export function TimeField({ label, hour, minute, onChange }: Props) {
     setOpen(true);
   }
 
+  function pickHour(h: number) {
+    setPendingH(h);
+    // En erken saate geçildiyse dakikayı da geçmişe düşmeyecek şekilde ileri al
+    if (min && h === min.hour && pendingM < min.minute) setPendingM(min.minute);
+  }
+
   function confirm() {
+    if (min && (pendingH < min.hour || (pendingH === min.hour && pendingM < min.minute))) {
+      onChange(min.hour, min.minute);
+      setOpen(false);
+      return;
+    }
     onChange(pendingH, pendingM);
     setOpen(false);
   }
@@ -80,9 +96,9 @@ export function TimeField({ label, hour, minute, onChange }: Props) {
 
             <View style={styles.wheelRow}>
               <View style={[styles.highlight, { borderColor: c.border }]} pointerEvents="none" />
-              <WheelColumn items={HOURS} value={pendingH} onChange={setPendingH} textColor={c.text} />
+              <WheelColumn key={`h${hours[0]}`} items={hours} value={pendingH} onChange={pickHour} textColor={c.text} />
               <Text style={[styles.colon, { color: c.text }]}>:</Text>
-              <WheelColumn items={MINUTES} value={pendingM} onChange={setPendingM} textColor={c.text} />
+              <WheelColumn key={`m${minutes[0]}`} items={minutes} value={pendingM} onChange={setPendingM} textColor={c.text} />
             </View>
 
             <View style={styles.confirmWrap}>

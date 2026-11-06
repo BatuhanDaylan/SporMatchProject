@@ -120,9 +120,12 @@ export function useProgramMutations() {
     onSuccess: invalidate,
   });
 
-  /** Başkasının programını kendi adına kopyala (fork) — plan kopyalanır, kayıtlar taşınmaz. */
+  /**
+   * Başkasının programını kendi adına kopyala (fork) — plan kopyalanır, kayıtlar taşınmaz.
+   * `template` verilirse yalnız seçilen günler/egzersizler kopyalanır.
+   */
   const fork = useMutation({
-    mutationFn: async (src: Program) => {
+    mutationFn: async ({ src, template }: { src: Program; template?: ProgramTemplate }) => {
       const { data, error } = await supabase
         .from('programs')
         .insert({
@@ -131,7 +134,7 @@ export function useProgramMutations() {
           description: src.description,
           sport_id: src.sport_id,
           visibility: 'private',
-          template: cloneTemplate(src.template) as unknown as Json,
+          template: cloneTemplate(template ?? src.template) as unknown as Json,
           forked_from: src.id,
         })
         .select('*')

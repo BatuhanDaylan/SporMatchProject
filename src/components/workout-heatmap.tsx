@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
 import { useHeatmap, type HeatDay } from '@/hooks/useHeatmap';
+import { useAuth } from '@/lib/auth';
 import { Spacing } from '@/constants/theme';
 
 const CELL = 13;
@@ -27,6 +28,8 @@ function level(c: number): number {
  * satır = gün. Son WEEKS hafta; yatay kaydırılır, en güncele hizalanır.
  */
 export function WorkoutHeatmap({ userId }: { userId?: string }) {
+  const { user } = useAuth();
+  const isMe = !userId || userId === user?.id;
   const c = useColors();
   const { data, isLoading } = useHeatmap(userId);
   const scrollRef = useRef<ScrollView>(null);
@@ -92,7 +95,9 @@ export function WorkoutHeatmap({ userId }: { userId?: string }) {
 
       {!isLoading && total === 0 ? (
         <Text style={{ color: c.textSecondary, fontSize: 13 }}>
-          Henüz antrenman kaydın yok. İlk antrenmanını kaydedince etkinlik haritan burada dolar.
+          {isMe
+            ? 'Henüz antrenman kaydın yok. İlk antrenmanını kaydedince etkinlik haritan burada dolar.'
+            : 'Bu sporcu henüz antrenman kaydetmedi.'}
         </Text>
       ) : (
         <>

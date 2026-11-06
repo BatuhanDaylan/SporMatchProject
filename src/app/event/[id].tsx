@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { displayName } from '@/lib/displayName';
 import { getErrorMessage } from '@/lib/errorMessage';
@@ -24,7 +24,23 @@ export default function EventDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: ev, isLoading, isError, refetch } = useEventDetail(id);
-  const { join, leave, cancelEvent } = useEventActions(id);
+  const { join, leave, cancelEvent, removeParticipant } = useEventActions(id);
+
+  function confirmRemove(p: { id?: string; username: string | null; display_name: string | null }) {
+    if (!ev || !p.id) return;
+    showAlert('Katılımcıyı çıkar', `${displayName(p)} etkinlikten çıkarılsın mı? Tekrar katılamaz.`, [
+      { text: 'Vazgeç', style: 'cancel' },
+      {
+        text: 'Çıkar',
+        style: 'destructive',
+        onPress: () =>
+          removeParticipant.mutate(
+            { eventId: ev.id, userId: p.id! },
+            { onError: (e) => showAlert('Çıkarılamadı', getErrorMessage(e)) },
+          ),
+      },
+    ]);
+  }
 
   function onToggleJoin() {
     if (!ev) return;
@@ -124,7 +140,7 @@ export default function EventDetailScreen() {
           </Card>
 
           {ev.description ? (
-            <Text style={{ color: c.text, fontSize: 15, lineHeight: 21 }}>{ev.description}</Text>
+            <Text selectable style={{ color: c.text, fontSize: 15, lineHeight: 21 }}>{ev.description}</Text>
           ) : null}
 
           {/* Harita */}
@@ -137,23 +153,38 @@ export default function EventDetailScreen() {
               <Text style={{ color: c.onPrimary, fontSize: 12, fontWeight: '800' }}>{ev.participant_count}</Text>
             </View>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ flexGrow: 0, flexShrink: 0 }}
-            contentContainerStyle={{ gap: Spacing.two }}>
+          <View style={{ gap: 6 }}>
             {ev.participants.map((p) => (
-              <Pressable key={p.id} onPress={() => p.id && router.push(`/user/${p.id}`)} style={styles.pav}>
-                <Avatar name={displayName(p)} url={p.avatar_url ?? null} size={48} />
-                <Text style={{ color: c.textSecondary, fontSize: 11, maxWidth: 60 }} numberOfLines={1}>
-                  {displayName(p)}
-                </Text>
-              </Pressable>
+              <View key={p.id} style={[styles.pRow, { borderColor: c.border }]}>
+                <Pressable onPress={() => p.id && router.push(`/user/${p.id}`)} style={styles.pInfo} accessibilityRole="button">
+                  <Avatar name={displayName(p)} url={p.avatar_url ?? null} size={36} />
+                  <Text style={{ color: c.text, fontWeight: '600', flex: 1 }} numberOfLines={1}>
+                    {displayName(p)}
+                    {p.id === ev.host_id ? ' · ev sahibi' : ''}
+                  </Text>
+                </Pressable>
+                {ev.is_host && p.id !== ev.host_id ? (
+                  <Pressable
+                    onPress={() => confirmRemove(p)}
+                    hitSlop={8}
+                    style={[styles.removeBtn, { borderColor: c.danger }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${displayName(p)} kişisini çıkar`}>
+                    <Text style={{ color: c.danger, fontWeight: '700', fontSize: 12 }}>Çıkar</Text>
+                  </Pressable>
+                ) : null}
+              </View>
             ))}
-          </ScrollView>
+          </View>
 
           <View style={{ height: Spacing.two }} />
-          {ev.status === 'open' ? (
+          {ev.banned && !ev.joined ? (
+            <View style={[styles.cancelBanner, { backgroundColor: c.backgroundElement }]}>
+              <Text style={{ color: c.textSecondary, fontWeight: '600', textAlign: 'center' }}>
+                Etkinlik sahibi seni bu etkinlikten çıkardı; tekrar katılamazsın.
+              </Text>
+            </View>
+          ) : ev.status === 'open' ? (
             <>
               <Button
                 title={ev.joined ? (ev.is_host ? 'Katılıyorsun (ev sahibi)' : 'Ayrıl') : 'Katıl'}
@@ -189,6 +220,8 @@ const styles = StyleSheet.create({
   countBadge: { minWidth: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
   hostRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, padding: Spacing.two, borderRadius: 14, borderWidth: 1 },
   section: { fontSize: 17, fontWeight: '700' },
-  pav: { alignItems: 'center', gap: 4, width: 60 },
+  pRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 6 },
+  pInfo: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flex: 1 },
+  removeBtn: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   cancelLink: { alignItems: 'center', paddingVertical: Spacing.two, marginTop: 4 },
 });

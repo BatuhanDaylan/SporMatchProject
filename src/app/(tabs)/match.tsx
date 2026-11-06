@@ -68,8 +68,12 @@ export default function MatchScreen() {
   const [error, setError] = useState<string | null>(null);
   const [limitHit, setLimitHit] = useState(false);
 
+  // Önce profilindeki sporlar; istersen yapmadığın bir sporu da seçebilirsin
+  const otherSports = (sports ?? []).filter((s) => !mySports.some((m) => m.id === s.id));
+  const [showOthers, setShowOthers] = useState(false);
+  const othersVisible = showOthers || mySports.length === 0;
   const selectedSet = selected ?? new Set(mySports.map((s) => s.id));
-  const chosen = mySports.filter((s) => selectedSet.has(s.id));
+  const chosen = [...mySports, ...otherSports].filter((s) => selectedSet.has(s.id));
   const summary = chosen.map((s) => s.name).join(', ');
 
   function toggleSport(id: string) {
@@ -77,6 +81,37 @@ export default function MatchScreen() {
     next.has(id) ? next.delete(id) : next.add(id);
     setSelected(next);
     setError(null);
+  }
+
+  function renderTile(s: { id: string; name: string; icon: string | null }) {
+    const on = selectedSet.has(s.id);
+    return (
+      <Pressable
+        key={s.id}
+        onPress={() => toggleSport(s.id)}
+        accessibilityRole="button"
+        accessibilityState={{ selected: on }}
+        accessibilityLabel={`${s.name}${on ? ', seçili' : ''}`}
+        style={({ pressed }) => [
+          styles.tile,
+          {
+            backgroundColor: on ? `${c.primary}22` : c.backgroundElement,
+            borderColor: on ? c.primary : c.border,
+            opacity: pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.97 : 1 }],
+          },
+        ]}>
+        <Text style={styles.tileEmoji}>{s.icon ?? '🏅'}</Text>
+        <Text style={[styles.tileName, { color: c.text }]} numberOfLines={1}>
+          {s.name}
+        </Text>
+        {on ? (
+          <View style={[styles.tick, { backgroundColor: c.primary }]}>
+            <Ionicons name="checkmark" size={12} color={c.onPrimary} />
+          </View>
+        ) : null}
+      </Pressable>
+    );
   }
 
   useIncomingMatchListener((matchId) => {
@@ -180,57 +215,50 @@ export default function MatchScreen() {
         </View>
       ) : null}
 
+      <Card
+        onPress={() => router.push('/match-history')}
+        style={styles.eventsCard}
+        accessibilityRole="button"
+        accessibilityLabel="Eşleşme geçmişi">
+        <View style={[styles.eventsIcon, { backgroundColor: c.primary }]}>
+          <Ionicons name="time-outline" size={20} color={c.onPrimary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: c.text, fontWeight: '700', fontSize: 15 }}>Eşleşme geçmişi</Text>
+          <Text style={{ color: c.textSecondary, fontSize: 12 }}>Canlı ve önceki eşleşmelerin</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={c.textSecondary} />
+      </Card>
+
       {/* 1) Spor seçimi — tüm seçenekler görünür, dokununca işaretlenir */}
       <TourTarget id="match.sports" style={{ gap: Spacing.two }}>
         <View style={styles.stepHead}>
           <Text style={[styles.step, { color: c.text }]}>Ne yapmak istiyorsun?</Text>
-          {mySports.length > 0 ? (
-            <Text style={{ color: c.textSecondary, fontSize: 12, fontWeight: '600' }}>
-              {chosen.length}/{mySports.length} seçili
-            </Text>
+          {chosen.length > 0 ? (
+            <Text style={{ color: c.textSecondary, fontSize: 12, fontWeight: '600' }}>{chosen.length} seçili</Text>
           ) : null}
         </View>
-        {mySports.length === 0 ? (
-          <Card style={styles.noSports}>
-            <Ionicons name="barbell-outline" size={28} color={c.textSecondary} />
-            <Text style={{ color: c.textSecondary, textAlign: 'center' }}>
-              Eşleşmek için profiline en az bir spor eklemelisin.
+        {mySports.length > 0 ? (
+          <View style={styles.grid}>{mySports.map((s) => renderTile(s))}</View>
+        ) : null}
+        {otherSports.length > 0 ? (
+          <Pressable
+            onPress={() => setShowOthers((v) => !v)}
+            hitSlop={6}
+            style={styles.othersToggle}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: othersVisible }}>
+            <Text style={{ color: c.primary, fontWeight: '700' }}>
+              {mySports.length === 0 ? 'Tüm sporlar' : othersVisible ? 'Diğer sporları gizle' : 'Diğer sporlar'}
             </Text>
-            <Button title="Spor ekle" size="md" onPress={() => router.push('/profile-edit')} />
-          </Card>
-        ) : (
-          <View style={styles.grid}>
-            {mySports.map((s) => {
-              const on = selectedSet.has(s.id);
-              return (
-                <Pressable
-                  key={s.id}
-                  onPress={() => toggleSport(s.id)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={`${s.name}${on ? ', seçili' : ''}`}
-                  style={({ pressed }) => [
-                    styles.tile,
-                    {
-                      backgroundColor: on ? `${c.primary}22` : c.backgroundElement,
-                      borderColor: on ? c.primary : c.border,
-                      opacity: pressed ? 0.85 : 1,
-                    },
-                  ]}>
-                  <Text style={styles.tileEmoji}>{s.icon ?? '🏅'}</Text>
-                  <Text style={[styles.tileName, { color: c.text }]} numberOfLines={1}>
-                    {s.name}
-                  </Text>
-                  {on ? (
-                    <View style={[styles.tick, { backgroundColor: c.primary }]}>
-                      <Ionicons name="checkmark" size={12} color={c.onPrimary} />
-                    </View>
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
+            {mySports.length > 0 ? (
+              <Ionicons name={othersVisible ? 'chevron-up' : 'chevron-down'} size={16} color={c.primary} />
+            ) : null}
+          </Pressable>
+        ) : null}
+        {othersVisible && otherSports.length > 0 ? (
+          <View style={styles.grid}>{otherSports.map((s) => renderTile(s))}</View>
+        ) : null}
       </TourTarget>
 
       {/* 2) Mesafe */}
@@ -270,7 +298,7 @@ export default function MatchScreen() {
           title="⚡ Eşleşmeyi Başlat"
           onPress={onStart}
           loading={start.isPending}
-          disabled={mySports.length === 0 || chosen.length === 0}
+          disabled={chosen.length === 0}
         />
         {chosen.length > 0 ? (
           <Text style={[styles.summary, { color: c.textSecondary }]} numberOfLines={2}>
@@ -338,7 +366,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pendingCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, padding: Spacing.two, borderRadius: 14, borderWidth: 1.5 },
-  noSports: { alignItems: 'center', gap: Spacing.two, padding: Spacing.three },
+  othersToggle: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4 },
   radii: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   summary: { fontSize: 13, textAlign: 'center', fontWeight: '600' },
   hintRow: { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' },

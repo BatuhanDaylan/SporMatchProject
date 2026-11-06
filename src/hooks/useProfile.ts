@@ -21,6 +21,8 @@ export type Profile = {
   availability: string[];
   onboarded: boolean;
   pro_until: string | null;
+  /** Gizli hesap: takip için onay gerekir, içerik yalnız takipçilere görünür. */
+  is_private?: boolean;
   created_at: string;
   updated_at: string;
   user_sports: UserSport[];

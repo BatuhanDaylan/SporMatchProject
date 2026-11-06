@@ -8,6 +8,8 @@ export type ProfileStats = {
   workouts: number;
   matches: number;
   comments: number;
+  /** Gönderi, program ve yorumlarına başkalarının verdiği beğeniler. */
+  likes: number;
   streak: number;
   member_since: string | null;
 };
