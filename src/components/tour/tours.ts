@@ -66,17 +66,10 @@ const DISCOVER: TourStep[] = [
     route: '/',
   },
   {
-    target: 'kesfet.programs',
-    home: '/',
-    title: 'Programlar',
-    text: 'Herkese açık antrenman programları burada. "Herkes" yeni programları, "Takip ettiklerim" takip ettiğin kişilerinkini gösterir. Bir programı açıp beğenebilir, kaydedebilir, yorum yapabilir ve kendi hesabına kopyalayabilirsin.',
-    advance: 'next',
-  },
-  {
     target: 'kesfet.feed-all',
     home: '/',
     title: 'Akış',
-    text: 'Akış, sporcuların kısa paylaşımlarıdır. "Tümünü Gör"e dokun.',
+    text: 'Akışta sporcuların paylaşımları ve herkese açık programlar birlikte görünür; spora göre filtreleyebilirsin. "Tümünü Gör"e dokun.',
     advance: 'tap',
     route: '/feed',
   },

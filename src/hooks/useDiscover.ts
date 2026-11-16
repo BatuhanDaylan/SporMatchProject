@@ -47,19 +47,3 @@ export function useDiscoverPrograms(sort: DiscoverSort = 'recent', periodDays = 
     },
   });
 }
-
-/** Takip akışı — takip ettiğin kullanıcıların herkese açık programları. */
-export function useFollowingFeed() {
-  return useQuery({
-    queryKey: ['discover', 'following'],
-    staleTime: 20_000,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('following_feed', { p_limit: 50 });
-      if (error) throw error;
-      return ((data as unknown as DiscoverProgram[]) ?? []).map((p) => ({
-        ...p,
-        template: (p.template as ProgramTemplate) ?? { days: [] },
-      }));
-    },
-  });
-}
