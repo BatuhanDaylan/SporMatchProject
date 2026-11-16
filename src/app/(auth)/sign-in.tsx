@@ -1,7 +1,8 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { GoogleButton } from '@/components/google-button';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
@@ -12,7 +13,22 @@ import { Spacing } from '@/constants/theme';
 
 export default function SignInScreen() {
   const c = useColors();
-  const { signIn } = useAuth();
+  const router = useRouter();
+  const { signIn, signInGoogle } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+
+  async function onGoogle() {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      await signInGoogle();
+    } catch (e) {
+      setError(mapAuthError(e));
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +36,7 @@ export default function SignInScreen() {
 
   async function onSubmit() {
     setError(null);
+    setUnconfirmed(false);
     if (!email.trim() || !password) {
       setError('E-posta ve parola gerekli.');
       return;
@@ -30,6 +47,7 @@ export default function SignInScreen() {
       // Yönlendirmeyi kök auth-gate yapar.
     } catch (e) {
       setError(mapAuthError(e));
+      if (/email not confirmed/i.test(String((e as { message?: string })?.message))) setUnconfirmed(true);
     } finally {
       setLoading(false);
     }
@@ -62,7 +80,21 @@ export default function SignInScreen() {
         error={error}
       />
 
-      <Button title="Giriş Yap" onPress={onSubmit} loading={loading} />
+      <Button title="Giriş Yap" onPress={onSubmit} loading={loading} disabled={googleLoading} />
+      {unconfirmed ? (
+        <Button
+          title="Doğrulama kodunu gir"
+          variant="secondary"
+          onPress={() => router.push(`/(auth)/verify?email=${encodeURIComponent(email.trim())}&resend=1`)}
+        />
+      ) : null}
+
+      <View style={styles.orRow}>
+        <View style={[styles.line, { backgroundColor: c.border }]} />
+        <Text style={{ color: c.textSecondary, fontSize: 13 }}>veya</Text>
+        <View style={[styles.line, { backgroundColor: c.border }]} />
+      </View>
+      <GoogleButton onPress={onGoogle} loading={googleLoading} disabled={loading} />
 
       <View style={styles.footer}>
         <Text style={{ color: c.textSecondary }}>Hesabın yok mu? </Text>
@@ -80,4 +112,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.two },
   link: { fontWeight: '600' },
+  orRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  line: { flex: 1, height: StyleSheet.hairlineWidth },
 });

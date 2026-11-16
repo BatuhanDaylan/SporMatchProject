@@ -2,6 +2,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { supabase } from '@/lib/supabase';
+import { signInWithGoogle, signOutGoogle } from '@/lib/googleAuth';
 import { unregisterPushToken } from '@/lib/push';
 import { queryClient } from '@/lib/queryClient';
 
@@ -10,8 +11,14 @@ type AuthContextValue = {
   initializing: boolean;
   session: Session | null;
   user: User | null;
-  signUp: (email: string, password: string) => Promise<void>;
+  /** Kayıt; e-posta doğrulaması açıksa oturum açılmaz ve needsVerification: true döner. */
+  signUp: (email: string, password: string) => Promise<{ needsVerification: boolean }>;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Google ile giriş/kayıt. Kullanıcı vazgeçerse false. */
+  signInGoogle: () => Promise<boolean>;
+  /** E-postaya gelen 6 haneli kodla kaydı doğrular (doğrulanınca oturum açılır). */
+  verifySignup: (email: string, code: string) => Promise<void>;
+  resendSignup: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -61,7 +68,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       signUp: async (email, password) => {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        // Doğrulama açıksa oturum gelmez; kullanıcı e-postasındaki kodu girmeli
+        return { needsVerification: !data.session };
+      },
+      signInGoogle: () => signInWithGoogle(),
+      verifySignup: async (email, code) => {
+        const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: 'signup' });
+        if (error) throw error;
+      },
+      resendSignup: async (email) => {
+        const { error } = await supabase.auth.resend({ type: 'signup', email });
         if (error) throw error;
       },
       signIn: async (email, password) => {
@@ -72,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Önce bu cihazın push token'ını sök (RLS: hâlâ oturum açıkken silinmeli),
         // sonra çıkış yap. Böylece token bir sonraki kullanıcıya yapışmaz.
         await unregisterPushToken();
+        await signOutGoogle();
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
       },

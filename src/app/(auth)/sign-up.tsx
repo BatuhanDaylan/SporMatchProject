@@ -3,6 +3,7 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { GoogleButton } from '@/components/google-button';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
@@ -13,7 +14,8 @@ import { Spacing } from '@/constants/theme';
 
 export default function SignUpScreen() {
   const c = useColors();
-  const { signUp } = useAuth();
+  const { signUp, signInGoogle } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,8 +29,9 @@ export default function SignUpScreen() {
       setError('E-posta ve parola gerekli.');
       return;
     }
-    if (password.length < 6) {
-      setError('Parola en az 6 karakter olmalı.');
+    // Güçlü parola: en az 8 karakter, harf ve rakam
+    if (password.length < 8 || !/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) || !/[0-9]/.test(password)) {
+      setError('Parola en az 8 karakter olmalı ve harf ile rakam içermeli.');
       return;
     }
     if (!accepted) {
@@ -37,12 +40,29 @@ export default function SignUpScreen() {
     }
     setLoading(true);
     try {
-      await signUp(email.trim(), password);
-      // Başarılıysa auth-gate onboarding'e yönlendirir.
+      const { needsVerification } = await signUp(email.trim(), password);
+      // Doğrulama gerekiyorsa koda; değilse oturum açılır ve kök yönlendirici profil ekranına götürür
+      if (needsVerification) router.replace(`/(auth)/verify?email=${encodeURIComponent(email.trim())}`);
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function onGoogle() {
+    setError(null);
+    if (!accepted) {
+      setError('Devam etmek için 18+ olduğunu ve şartları kabul ettiğini onayla.');
+      return;
+    }
+    setGoogleLoading(true);
+    try {
+      await signInGoogle();
+    } catch (e) {
+      setError(mapAuthError(e));
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -66,7 +86,7 @@ export default function SignUpScreen() {
       />
       <TextField
         label="Parola"
-        placeholder="En az 6 karakter"
+        placeholder="En az 8 karakter, harf ve rakam"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -93,7 +113,13 @@ export default function SignUpScreen() {
         </Text>
       </Pressable>
 
-      <Button title="Kayıt Ol" onPress={onSubmit} loading={loading} />
+      <Button title="Kayıt Ol" onPress={onSubmit} loading={loading} disabled={googleLoading} />
+      <View style={styles.orRow}>
+        <View style={[styles.line, { backgroundColor: c.border }]} />
+        <Text style={{ color: c.textSecondary, fontSize: 13 }}>veya</Text>
+        <View style={[styles.line, { backgroundColor: c.border }]} />
+      </View>
+      <GoogleButton onPress={onGoogle} loading={googleLoading} disabled={loading} />
 
       <View style={styles.footer}>
         <Text style={{ color: c.textSecondary }}>Zaten hesabın var mı? </Text>
@@ -111,6 +137,8 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.two },
   link: { fontWeight: '600' },
+  orRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  line: { flex: 1, height: StyleSheet.hairlineWidth },
   acceptRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start', marginVertical: Spacing.two },
   acceptText: { flex: 1, fontSize: 13, lineHeight: 19 },
 });
