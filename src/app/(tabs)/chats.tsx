@@ -143,7 +143,7 @@ export default function ChatsScreen() {
             <EmptyState
               icon="chatbubbles-outline"
               title="Henüz sohbetin yok"
-              text="Biriyle eşleş ya da bir profile gidip sohbet isteği gönder."
+              text="Biriyle eşleş ya da bir sporcunun profilindeki “Mesaj” düğmesiyle sohbet isteği gönder."
               action={<Button title="Eşleşmeye başla" onPress={() => router.push('/match')} />}
             />
           }

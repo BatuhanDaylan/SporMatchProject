@@ -1,166 +1,117 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
-import { displayName } from '@/lib/displayName';
-import { timeAgo } from '@/lib/datetime';
-import { AsyncState } from '@/components/ui/async-state';
-import { Avatar } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Screen } from '@/components/ui/screen';
+import { NotificationBell } from '@/components/notification-bell';
+import { PostCard } from '@/components/post-card';
+import { ProgramCard } from '@/components/program-card';
+import { SportFilter } from '@/components/sport-filter';
 import { TourTarget } from '@/components/tour/tour-target';
+import { AsyncState } from '@/components/ui/async-state';
+import { Fab } from '@/components/ui/fab';
+import { Screen } from '@/components/ui/screen';
+import { Segment } from '@/components/ui/segment';
 import { useColors } from '@/hooks/useColors';
+import { useDiscoverPrograms, type DiscoverProgram } from '@/hooks/useDiscover';
 import { useFeed, type FeedPost } from '@/hooks/useFeed';
-import { Elevation, Spacing, Type } from '@/constants/theme';
+import { useRefresh } from '@/hooks/useRefresh';
+import { BottomTabInset, Spacing, Type } from '@/constants/theme';
+
+type Filter = 'all' | 'posts' | 'programs';
+type Item = { kind: 'post'; date: string; post: FeedPost } | { kind: 'program'; date: string; program: DiscoverProgram };
+
+const FILTERS = [
+  { value: 'all', label: 'Tümü' },
+  { value: 'posts', label: 'Gönderiler' },
+  { value: 'programs', label: 'Programlar' },
+] as const;
 
 /**
- * Keşfet — arama + Akış rafı. Programlar artık birleşik akışta (gönderilerle birlikte, spor filtreli)
- * gösterildiği için burada ayrı program rafı yok.
+ * Keşfet = akışın kendisi: gönderiler ve herkese açık programlar tarih sırasıyla bir arada,
+ * türe ve (programlarda) spora göre filtrelenir. Üstte arama, sağ üstte bildirim zili.
  */
 export default function DiscoverScreen() {
   const c = useColors();
   const router = useRouter();
-  const feed = useFeed();
+  const [filter, setFilter] = useState<Filter>('all');
+  const [sportId, setSportId] = useState<string | null>(null);
+  const posts = useFeed();
+  const programs = useDiscoverPrograms('recent', 7, sportId);
+  const refresh = useRefresh(() => Promise.all([posts.refetch(), programs.refetch()]));
 
-  useFocusEffect(
-    useCallback(() => {
-      if (feed.isStale) feed.refetch();
-    }, [feed.isStale, feed.refetch]),
-  );
+  const items = useMemo<Item[]>(() => {
+    const out: Item[] = [];
+    if (filter !== 'programs') for (const p of posts.data ?? []) out.push({ kind: 'post', date: p.created_at, post: p });
+    if (filter !== 'posts') for (const p of programs.data ?? []) out.push({ kind: 'program', date: p.updated_at, program: p });
+    return out.sort((a, b) => b.date.localeCompare(a.date));
+  }, [filter, posts.data, programs.data]);
+
+  const loading = (filter !== 'programs' && posts.isLoading) || (filter !== 'posts' && programs.isLoading);
+  const error = (filter !== 'programs' && posts.isError) || (filter !== 'posts' && programs.isError);
 
   return (
-    <Screen scroll floatingTabBar>
-      <View>
+    <Screen>
+      <View style={styles.header}>
         <Text style={[styles.title, { color: c.text }]}>Keşfet</Text>
-        <Text style={[styles.subtitle, { color: c.textSecondary }]}>
-          Sporcuların paylaşımları ve programları.
-        </Text>
+        <TourTarget id="kesfet.bell">
+          <NotificationBell />
+        </TourTarget>
       </View>
 
-      {/* Arama — ikon yerine davetkâr bir çubuk */}
       <TourTarget id="kesfet.search">
-      <Pressable
-        onPress={() => router.push('/search')}
-        style={[styles.searchBar, { backgroundColor: c.backgroundElement, borderColor: c.border }]}
-        accessibilityRole="button"
-        accessibilityLabel="Sporcu veya program ara">
-        <Ionicons name="search" size={17} color={c.textSecondary} />
-        <Text style={{ color: c.textSecondary, fontSize: 14 }}>Sporcu veya program ara…</Text>
-      </Pressable>
+        <Pressable
+          onPress={() => router.push('/search')}
+          style={[styles.searchBar, { backgroundColor: c.backgroundElement, borderColor: c.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="Sporcu veya program ara">
+          <Ionicons name="search" size={17} color={c.textSecondary} />
+          <Text style={{ color: c.textSecondary, fontSize: 14 }}>Sporcu veya program ara…</Text>
+        </Pressable>
       </TourTarget>
 
-      {/* Akış rafı */}
-      <TourTarget id="kesfet.feed" style={{ gap: Spacing.two }}>
-        <View style={styles.sectionHead}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.sectionTitle, { color: c.text }]}>Akış</Text>
-            <Text style={[styles.sectionSub, { color: c.textSecondary }]}>Sporcuların son paylaşımları</Text>
-          </View>
-          <TourTarget id="kesfet.feed-all">
-          <Pressable
-            onPress={() => router.push('/feed')}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel="Tüm gönderileri gör">
-            <Text style={{ color: c.primary, ...Type.label }}>Tümünü Gör</Text>
-          </Pressable>
-          </TourTarget>
-        </View>
-
-        <AsyncState
-          isLoading={feed.isLoading}
-          isError={feed.isError}
-          onRetry={feed.refetch}
-          isEmpty={(feed.data?.length ?? 0) === 0}
-          empty={{
-            compact: true,
-            icon: 'newspaper-outline',
-            title: 'Henüz gönderi yok',
-            text: 'İlk paylaşımı sen yap.',
-            action: <Button title="Gönderi paylaş" onPress={() => router.push('/post/create')} />,
-          }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.noGrow} contentContainerStyle={styles.row}>
-            {(feed.data ?? []).slice(0, 8).map((p) => (
-              <PostPreview
-                key={p.id}
-                post={p}
-                onPress={() => router.push(`/post/${p.id}`)}
-                onOpenAuthor={() => router.push(`/user/${p.author_id}`)}
-              />
-            ))}
-          </ScrollView>
-        </AsyncState>
+      <TourTarget id="kesfet.filter" style={{ gap: Spacing.two }}>
+        <Segment value={filter} onChange={setFilter} options={FILTERS} />
+        {filter === 'programs' ? <SportFilter value={sportId} onChange={setSportId} /> : null}
       </TourTarget>
+
+      <AsyncState
+        isLoading={loading}
+        isError={error}
+        onRetry={refresh.onRefresh}
+        isEmpty={items.length === 0}
+        empty={{
+          icon: 'newspaper-outline',
+          title: filter === 'programs' ? 'Program yok' : 'Henüz gönderi yok',
+          text: filter === 'programs' ? 'Bu filtrede herkese açık program yok.' : 'İlk paylaşımı sen yap — antrenmanını ya da hedefini paylaş.',
+        }}>
+        <FlatList
+          data={items}
+          keyExtractor={(it) => `${it.kind}:${it.kind === 'post' ? it.post.id : it.program.id}`}
+          contentContainerStyle={{ gap: Spacing.two, paddingBottom: BottomTabInset + 72 }}
+          refreshControl={<RefreshControl {...refresh} tintColor={c.primary} colors={[c.primary]} />}
+          initialNumToRender={6}
+          windowSize={7}
+          removeClippedSubviews
+          renderItem={({ item }) => (item.kind === 'post' ? <PostCard post={item.post} /> : <ProgramCard program={item.program} />)}
+        />
+      </AsyncState>
+
+      <Fab icon="create-outline" size={24} onPress={() => router.push('/post/create')} accessibilityLabel="Gönderi oluştur" tourId="feed.fab" bottom={BottomTabInset + Spacing.three} />
     </Screen>
   );
 }
 
-function Count({ icon, value }: { icon: keyof typeof Ionicons.glyphMap; value: number }) {
-  const c = useColors();
-  return (
-    <View style={styles.countChip}>
-      <Ionicons name={icon} size={13} color={c.primary} />
-      <Text style={{ color: c.textSecondary, fontSize: 12 }}>{value}</Text>
-    </View>
-  );
-}
-
-function PostPreview({ post, onPress, onOpenAuthor }: { post: FeedPost; onPress: () => void; onOpenAuthor: () => void }) {
-  const c = useColors();
-  const authorName = displayName(post.author);
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.previewCard,
-        Elevation.card,
-        { backgroundColor: c.backgroundElement, borderColor: c.border, opacity: pressed ? 0.85 : 1 },
-      ]}>
-      <Pressable onPress={onOpenAuthor} style={styles.previewOwner} hitSlop={4}>
-        <Avatar name={authorName} url={post.author?.avatar_url} size={20} />
-        <Text style={{ color: c.text, fontSize: 12, fontWeight: '700', flex: 1 }} numberOfLines={1}>
-          {authorName}
-        </Text>
-      </Pressable>
-      {post.image_url ? (
-        <Image source={{ uri: post.image_url }} style={styles.previewImage} contentFit="cover" />
-      ) : (
-        <Text style={[styles.postBody, { color: c.text }]} numberOfLines={4}>
-          {post.body}
-        </Text>
-      )}
-      <View style={styles.previewCounts}>
-        <Count icon="heart-outline" value={post.like_count} />
-        <Count icon="chatbubble-outline" value={post.comment_count} />
-        <Text style={{ color: c.textSecondary, fontSize: 11, marginLeft: 'auto' }}>{timeAgo(post.created_at)}</Text>
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { ...Type.displayTitle },
-  subtitle: { fontSize: 14, marginTop: 2 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    height: 48,
+    height: 44,
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: Spacing.three,
   },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
-  sectionSub: { fontSize: 12, marginTop: 1 },
-  postBody: { fontSize: 14, lineHeight: 20 },
-  sectionTitle: { ...Type.sectionTitle },
-  noGrow: { flexGrow: 0, flexShrink: 0 },
-  row: { gap: Spacing.two, paddingRight: Spacing.two, paddingBottom: 2 },
-  previewCard: { width: 184, borderRadius: 14, borderWidth: 1, padding: Spacing.two, gap: 8 },
-  previewOwner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  previewCounts: { flexDirection: 'row', gap: Spacing.two },
-  previewImage: { width: '100%', height: 84, borderRadius: 8 },
-  countChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 });

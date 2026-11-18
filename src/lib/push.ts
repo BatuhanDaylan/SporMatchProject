@@ -108,7 +108,7 @@ export function routeForNotification(data: Record<string, unknown>): string | nu
     case 'follow_request':
       return '/follow-requests';
     case 'post_comment':
-      return data.post_id ? `/post/${data.post_id}` : '/feed';
+      return data.post_id ? `/post/${data.post_id}` : '/';
     case 'match':
       return data.match_id ? `/match/${data.match_id}` : null;
     case 'comment':
@@ -116,7 +116,7 @@ export function routeForNotification(data: Record<string, unknown>): string | nu
     case 'event':
       return data.event_id ? `/event/${data.event_id}` : null;
     case 'post':
-      return data.post_id ? `/post/${data.post_id}` : '/feed';
+      return data.post_id ? `/post/${data.post_id}` : '/';
     default:
       return null;
   }

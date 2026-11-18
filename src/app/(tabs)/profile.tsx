@@ -8,12 +8,10 @@ import { showAlert } from '@/store/alert';
 
 import { ProfileView } from '@/components/profile-view';
 import { Button } from '@/components/ui/button';
-import { IconButton } from '@/components/ui/icon-button';
 import { Screen } from '@/components/ui/screen';
 import { TourTarget } from '@/components/tour/tour-target';
 import { useColors } from '@/hooks/useColors';
 import { useFollow } from '@/hooks/useFollow';
-import { useNotifications } from '@/hooks/useNotifications';
 import { usePro } from '@/hooks/usePro';
 import { PRO_ENFORCED } from '@/constants/pro';
 import { useProfile } from '@/hooks/useProfile';
@@ -37,7 +35,6 @@ export default function ProfileScreen() {
   const { data: sports } = useSports();
   const { data: stats, isLoading: statsLoading } = useProfileStats();
   const { data: followInfo } = useFollow(user?.id);
-  const { unread } = useNotifications();
   const { isPro } = usePro();
 
   function confirmSignOut() {
@@ -64,20 +61,6 @@ export default function ProfileScreen() {
     <Screen scroll floatingTabBar>
       <View style={styles.header}>
         <Text style={[styles.title, { color: c.text }]}>Profil</Text>
-        <TourTarget id="profile.bell">
-        <IconButton
-          icon="notifications-outline"
-          iconColor={c.text}
-          backgroundColor={c.backgroundElement}
-          onPress={() => router.push('/notifications')}
-          accessibilityLabel={unread > 0 ? `Bildirimler, ${unread} okunmamış` : 'Bildirimler'}>
-          {unread > 0 ? (
-            <View style={[styles.unreadDot, { backgroundColor: c.danger, borderColor: c.background }]}>
-              <Text style={[styles.unreadText, { color: c.onDanger }]}>{unread > 9 ? '9+' : unread}</Text>
-            </View>
-          ) : null}
-        </IconButton>
-        </TourTarget>
       </View>
 
       <ProfileView
@@ -161,19 +144,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     padding: Spacing.three,
   },
-  unreadDot: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  unreadText: { fontSize: 10, fontWeight: '800' },
   footerRow: { flexDirection: 'row', gap: Spacing.two },
   secondaryBtn: {
     flex: 1,

@@ -12,13 +12,15 @@ type Props = {
   accessibilityLabel: string;
   /** Tanıtım hedefi kimliği (yalnızca tanıtımda vurgulanacak düğmelerde). */
   tourId?: string;
+  /** Alttan uzaklık (kayan sekme çubuğu olan ekranlarda çubuğun üstünde durması için). */
+  bottom?: number;
 };
 
 /** Sağ altta sabit "oluştur" düğmesi — liste ekranlarında (Akış, Etkinlikler, Meydan Okumalar) tekrar eden desen. */
-export function Fab({ icon, size = 26, onPress, accessibilityLabel, tourId }: Props) {
+export function Fab({ icon, size = 26, onPress, accessibilityLabel, tourId, bottom }: Props) {
   const c = useColors();
   return (
-    <TourTarget id={tourId ?? 'fab'} style={styles.pos}>
+    <TourTarget id={tourId ?? 'fab'} style={[styles.pos, bottom !== undefined && { bottom }]}>
       <Pressable
         onPress={onPress}
         style={[styles.fab, { backgroundColor: c.primary }]}
