@@ -83,8 +83,8 @@ export default function ProgramDetailScreen() {
         (en) => en.exercise_id === activeMetric.exId,
       );
       const raw = entry?.values?.[activeMetric.fieldKey];
-      const val = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseFloat(raw) : NaN;
-      if (!Number.isNaN(val)) pts.push({ label: log.performed_at.slice(5), value: val });
+      const val = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseFloat(raw.replace(',', '.')) : NaN;
+      if (!Number.isNaN(val)) pts.push({ label: log.performed_at.slice(0, 10).split('-').reverse().slice(0, 2).join('.'), value: val }); // 2026-11-16 → 16.11
     }
     return pts;
   }, [activeMetric, logs]);

@@ -82,7 +82,7 @@ export default function LogWorkoutScreen() {
         if (f.type === 'checkbox') out[f.key] = !!val;
         else if (f.type === 'text') out[f.key] = String(val);
         else {
-          const n = parseFloat(String(val));
+          const n = parseFloat(String(val).replace(',', '.')); // Türkçe klavye ondalık için virgül verir (62,5)
           if (!Number.isNaN(n)) out[f.key] = n;
         }
       }

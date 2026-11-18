@@ -19,7 +19,7 @@ export function computePRs(template: ProgramTemplate, logs: LogLike[]): PR[] {
   for (const log of logs) {
     for (const entry of log.data.entries ?? []) {
       for (const [k, v] of Object.entries(entry.values)) {
-        const num = typeof v === 'number' ? v : parseFloat(String(v));
+        const num = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
         if (Number.isNaN(num)) continue;
         const key = `${entry.exercise_id}.${k}`;
         if (!maxes.has(key) || num > maxes.get(key)!) maxes.set(key, num);
@@ -45,7 +45,7 @@ export function priorMax(logs: LogLike[], exId: string, fieldKey: string): numbe
     for (const entry of log.data.entries ?? []) {
       if (entry.exercise_id !== exId) continue;
       const v = entry.values[fieldKey];
-      const num = typeof v === 'number' ? v : parseFloat(String(v));
+      const num = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
       if (Number.isNaN(num)) continue;
       if (max === null || num > max) max = num;
     }

@@ -133,8 +133,8 @@ export default function ProgramEditScreen() {
 
   async function onSave() {
     setError(null);
-    if (!title.trim()) {
-      setError('Program başlığı gerekli.');
+    if (title.trim().replace(/[^\p{L}\p{N}]/gu, '').length < 3) {
+      setError('Program başlığı en az 3 harf/rakam içermeli.');
       return;
     }
     const input = {
