@@ -179,65 +179,61 @@ export default function PublicProfileScreen() {
         onOpenFollowers={() => router.push(`/follows?userId=${id}&tab=followers`)}
         onOpenFollowing={() => router.push(`/follows?userId=${id}&tab=following`)}
         headerAction={
-          isMe || blocked ? null : (
-            <Pressable
-              onPress={onFollowPress}
-              disabled={followBusy}
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.followBtn,
-                following || requested
-                  ? { backgroundColor: c.backgroundElement, borderColor: c.border, borderWidth: 1 }
-                  : { backgroundColor: c.primary },
-                { opacity: pressed || followBusy ? 0.8 : 1 },
-              ]}>
-              <Ionicons
-                name={following ? 'checkmark' : requested ? 'time-outline' : 'person-add'}
-                size={16}
-                color={following || requested ? c.text : c.onPrimary}
-              />
-              <Text style={{ color: following || requested ? c.text : c.onPrimary, fontWeight: '700' }}>
-                {following
-                  ? 'Takip Ediliyor'
-                  : requested
-                    ? 'İstek gönderildi · geri çek'
-                    : follow.data?.is_private
-                      ? 'Takip isteği gönder'
-                      : 'Takip Et'}
-              </Text>
-            </Pressable>
-          )
-        }
-        footer={
           isMe ? null : blocked ? (
             <Pressable
               onPress={() => unblock.mutate(id)}
+              accessibilityRole="button"
               style={({ pressed }) => [
-                styles.chatBtn,
-                { backgroundColor: c.backgroundElement, opacity: pressed ? 0.85 : 1 },
+                styles.actionBtn,
+                { backgroundColor: c.background, borderColor: c.border, borderWidth: 1, opacity: pressed ? 0.85 : 1 },
               ]}>
-              <Ionicons name="ban" size={18} color={c.danger} />
-              <Text style={{ color: c.danger, fontWeight: '700', fontSize: 16 }}>Engeli kaldır</Text>
+              <Ionicons name="ban" size={16} color={c.danger} />
+              <Text style={{ color: c.danger, fontWeight: '700' }}>Engeli kaldır</Text>
             </Pressable>
           ) : (
-            <Pressable
-              onPress={onSendRequest}
-              disabled={sendRequest.isPending}
-              style={({ pressed }) => [
-                styles.chatBtn,
-                { backgroundColor: c.primary, opacity: pressed || sendRequest.isPending ? 0.85 : 1 },
-              ]}>
-              {sendRequest.isPending ? (
-                <ActivityIndicator color={c.onPrimary} />
-              ) : (
-                <>
-                  <Ionicons name="chatbubble-ellipses" size={18} color={c.onPrimary} />
-                  <Text style={{ color: c.onPrimary, fontWeight: '700', fontSize: 16 }}>
-                    Sohbet isteği gönder
-                  </Text>
-                </>
-              )}
-            </Pressable>
+            <View style={styles.actionRow}>
+              <Pressable
+                onPress={onFollowPress}
+                disabled={followBusy}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  following || requested
+                    ? { backgroundColor: c.background, borderColor: c.border, borderWidth: 1 }
+                    : { backgroundColor: c.primary },
+                  { opacity: pressed || followBusy ? 0.8 : 1 },
+                ]}>
+                <Ionicons
+                  name={following ? 'checkmark' : requested ? 'time-outline' : 'person-add'}
+                  size={16}
+                  color={following || requested ? c.text : c.onPrimary}
+                />
+                <Text
+                  numberOfLines={1}
+                  style={{ color: following || requested ? c.text : c.onPrimary, fontWeight: '700' }}>
+                  {following ? 'Takip Ediliyor' : requested ? 'İstek gönderildi' : follow.data?.is_private ? 'İstek gönder' : 'Takip Et'}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={onSendRequest}
+                disabled={sendRequest.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Sohbet isteği gönder"
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  { backgroundColor: c.background, borderColor: c.border, borderWidth: 1 },
+                  { opacity: pressed || sendRequest.isPending ? 0.8 : 1 },
+                ]}>
+                {sendRequest.isPending ? (
+                  <ActivityIndicator color={c.text} />
+                ) : (
+                  <>
+                    <Ionicons name="chatbubble-ellipses-outline" size={16} color={c.text} />
+                    <Text style={{ color: c.text, fontWeight: '700' }}>Mesaj</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
           )
         }
       />
@@ -266,22 +262,16 @@ export default function PublicProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  chatBtn: {
+  actionRow: { flexDirection: 'row', gap: Spacing.two },
+  actionBtn: {
+    flex: 1,
     flexDirection: 'row',
-    gap: Spacing.two,
-    height: 52,
-    borderRadius: 16,
+    gap: 6,
+    height: 42,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing.two,
-  },
-  followBtn: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: Spacing.two,
   },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', padding: Spacing.three },
   sheet: { borderRadius: 18, paddingHorizontal: Spacing.three, paddingTop: Spacing.three, paddingBottom: Spacing.two },

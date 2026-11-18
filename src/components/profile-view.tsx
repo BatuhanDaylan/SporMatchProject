@@ -89,8 +89,25 @@ export function ProfileView({
               {name}
             </Text>
             {username ? <Text style={{ color: c.textSecondary }} selectable>@{username}</Text> : null}
+            {followInfo ? (
+              <View style={styles.followRow}>
+                <Pressable onPress={onOpenFollowers} hitSlop={6} accessibilityRole="button">
+                  <Text style={{ color: c.textSecondary, fontSize: 14 }}>
+                    <Text style={[styles.followNum, { color: c.text }]}>{followInfo.followers}</Text> Takipçi
+                  </Text>
+                </Pressable>
+                <Text style={{ color: c.border }}>•</Text>
+                <Pressable onPress={onOpenFollowing} hitSlop={6} accessibilityRole="button">
+                  <Text style={{ color: c.textSecondary, fontSize: 14 }}>
+                    <Text style={[styles.followNum, { color: c.text }]}>{followInfo.following}</Text> Takip
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         </View>
+
+        {headerAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
 
         {pills.length ? (
           <View style={styles.pills}>
@@ -103,24 +120,6 @@ export function ProfileView({
         ) : null}
 
         {bio ? <Text selectable style={[styles.bio, { color: c.text }]}>{bio}</Text> : null}
-
-        {followInfo ? (
-          <View style={styles.followRow}>
-            <Pressable onPress={onOpenFollowers} hitSlop={6} accessibilityRole="button">
-              <Text style={{ color: c.textSecondary, fontSize: 14 }}>
-                <Text style={[styles.followNum, { color: c.text }]}>{followInfo.followers}</Text> Takipçi
-              </Text>
-            </Pressable>
-            <Text style={{ color: c.border }}>•</Text>
-            <Pressable onPress={onOpenFollowing} hitSlop={6} accessibilityRole="button">
-              <Text style={{ color: c.textSecondary, fontSize: 14 }}>
-                <Text style={[styles.followNum, { color: c.text }]}>{followInfo.following}</Text> Takip
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
-
-        {headerAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
       </TourTarget>
 
       {/* İstatistikler */}
@@ -273,7 +272,7 @@ const styles = StyleSheet.create({
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   pill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
   bio: { fontSize: 15, lineHeight: 21 },
-  followRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  followRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginTop: 4 },
   followNum: { fontSize: 16, fontWeight: '800' },
   headerAction: { alignSelf: 'stretch' },
   statsCard: { flexDirection: 'row', paddingVertical: Spacing.three },
