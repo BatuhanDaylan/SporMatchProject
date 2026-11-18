@@ -14,6 +14,7 @@ export type SearchProgram = {
   title: string;
   owner_id: string;
   sport: { name: string; icon: string | null } | null;
+  owner: { username: string | null; display_name: string | null } | null;
 };
 
 /** Kullanıcı (isim/kullanıcı adı) ve herkese açık program (başlık) araması. */
@@ -29,7 +30,7 @@ export function useSearch(term: string) {
         supabase.from('profiles').select('id,username,display_name,avatar_url').ilike('display_name', like).limit(20),
         supabase
           .from('programs')
-          .select('id,title,owner_id,sport:sports!programs_sport_id_fkey(name,icon)')
+          .select('id,title,owner_id,sport:sports!programs_sport_id_fkey(name,icon),owner:profiles!programs_owner_id_fkey(username,display_name)')
           .eq('visibility', 'public')
           .ilike('title', like)
           .limit(20),

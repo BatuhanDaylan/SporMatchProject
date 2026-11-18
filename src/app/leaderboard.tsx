@@ -37,7 +37,7 @@ export default function LeaderboardScreen() {
       <Stack.Screen options={{ headerShown: true, title: 'Liderlik' }} />
 
       <Text style={{ color: c.textSecondary, fontSize: 13 }}>
-        Son 7 günün en düzenlileri. Eşitlikte son 30 günün düzenliliği belirler.
+        Son 7 günün en düzenlileri. Eşitlikte son 30 günün düzenliliği belirler. Antrenmanlar kaydedildikleri gün sayılır; geçmiş bir tarihe girilen kayıtlar sıralamayı değiştirmez.
       </Text>
 
       {/* Meydan okumalar girişi */}

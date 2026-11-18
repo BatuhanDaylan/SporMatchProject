@@ -47,3 +47,34 @@ export function useDiscoverPrograms(sort: DiscoverSort = 'recent', periodDays = 
     },
   });
 }
+
+/**
+ * Bir kullanıcının programları (profil sayfası için). Başkasının profilinde yalnız herkese açıklar;
+ * kendi profilinde gizliler de görünür. Görünürlük ayrıca RLS ile korunur (gizli hesap vb.).
+ */
+export function useUserPrograms(userId: string | undefined, isMe: boolean) {
+  return useQuery({
+    queryKey: ['user-programs', userId, isMe],
+    enabled: !!userId,
+    staleTime: 20_000,
+    queryFn: async () => {
+      let q = supabase
+        .from('programs')
+        .select(
+          'id,title,description,owner_id,visibility,template,updated_at,sport_id,' +
+            'owner:profiles!programs_owner_id_fkey(username,display_name,avatar_url),' +
+            'sport:sports!programs_sport_id_fkey(name,icon)',
+        )
+        .eq('owner_id', userId!)
+        .order('updated_at', { ascending: false })
+        .limit(50);
+      if (!isMe) q = q.eq('visibility', 'public');
+      const { data, error } = await q;
+      if (error) throw error;
+      return ((data as unknown as DiscoverProgram[]) ?? []).map((p) => ({
+        ...p,
+        template: (p.template as ProgramTemplate) ?? { days: [] },
+      }));
+    },
+  });
+}

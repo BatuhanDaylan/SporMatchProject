@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { PickerField } from '@/components/ui/picker-field';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { useColors } from '@/hooks/useColors';
@@ -14,6 +15,7 @@ import { getErrorMessage } from '@/lib/errorMessage';
 import { hasBannedWords, assertClean } from '@/lib/moderation';
 import { supabase } from '@/lib/supabase';
 import { Spacing } from '@/constants/theme';
+import { PROVINCES } from '@/constants/tr-cities';
 import type { SkillLevel } from '@/types/database';
 
 const LEVELS: { id: SkillLevel; label: string }[] = [
@@ -33,6 +35,8 @@ export default function OnboardingScreen() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [level, setLevel] = useState<SkillLevel | null>(null);
+  // İl: etkinlikler, şehir liderliği ve keşif için (opsiyonel; sonra profilden de değişir)
+  const [province, setProvince] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +59,7 @@ export default function OnboardingScreen() {
         username: username.trim(),
         display_name: displayName.trim() || username.trim(),
         level,
+        province,
       });
       if (pErr) throw pErr;
 
@@ -136,6 +141,17 @@ export default function OnboardingScreen() {
           <Chip key={l.id} label={l.label} selected={level === l.id} onPress={() => setLevel(l.id)} />
         ))}
       </View>
+
+      <PickerField
+        label="Yaşadığın il (opsiyonel)"
+        value={province}
+        placeholder="İl seç"
+        options={PROVINCES}
+        onChange={setProvince}
+      />
+      <Text style={{ color: c.textSecondary, fontSize: 12, marginTop: -Spacing.two }}>
+        İlindeki etkinlikleri ve sporcuları göstermek için kullanılır.
+      </Text>
 
       <Text style={[styles.section, { color: c.text }]}>Yaptığın sporlar</Text>
       {sportsLoading ? (

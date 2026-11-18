@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
@@ -33,6 +33,10 @@ export function WorkoutHeatmap({ userId }: { userId?: string }) {
   const c = useColors();
   const { data, isLoading } = useHeatmap(userId);
   const scrollRef = useRef<ScrollView>(null);
+  // Görünen alanı sütun genişliğinin tam katına yuvarla: en soldaki sütun yarım görünmesin
+  const [boxW, setBoxW] = useState(0);
+  const colW = CELL + GAP;
+  const viewW = boxW ? Math.floor((boxW + GAP) / colW) * colW : undefined;
 
   const { columns, monthLabels, total } = useMemo(() => {
     const counts = new Map<string, number>();
@@ -85,7 +89,7 @@ export function WorkoutHeatmap({ userId }: { userId?: string }) {
   }
 
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 8 }} onLayout={(e) => setBoxW(e.nativeEvent.layout.width)}>
       <View style={styles.head}>
         <Text style={[styles.title, { color: c.text }]}>Aktivite</Text>
         <Text style={{ color: c.textSecondary, fontSize: 12 }}>
@@ -105,7 +109,9 @@ export function WorkoutHeatmap({ userId }: { userId?: string }) {
           ref={scrollRef}
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0, flexShrink: 0 }}
+          style={{ flexGrow: 0, flexShrink: 0, width: viewW }}
+          snapToInterval={colW}
+          decelerationRate="fast"
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
           <View>
             {/* Ay etiketleri */}

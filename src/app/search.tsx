@@ -92,11 +92,12 @@ export default function SearchScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: c.text, fontWeight: '700', fontSize: 15 }}>{p.title}</Text>
-                    {p.sport ? (
-                      <Text style={{ color: c.textSecondary, fontSize: 13 }}>
-                        {p.sport.icon} {p.sport.name}
-                      </Text>
-                    ) : null}
+                    {/* Aynı adlı programlar ayırt edilsin: spor + sahibi */}
+                    <Text style={{ color: c.textSecondary, fontSize: 13 }} numberOfLines={1}>
+                      {[p.sport ? `${p.sport.icon ?? ''} ${p.sport.name}`.trim() : null, p.owner ? displayName(p.owner) : null]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Text>
                   </View>
                 </Pressable>
               ))}

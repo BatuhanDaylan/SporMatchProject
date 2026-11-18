@@ -300,7 +300,10 @@ export default function MatchScreen() {
           loading={start.isPending}
           disabled={chosen.length === 0}
         />
-        {chosen.length > 0 ? (
+        {start.isPending ? (
+          // Konum almak cihaza göre 5-10 sn sürebilir; ne beklendiği görünsün
+          <Text style={[styles.summary, { color: c.primary }]}>📍 Konumun alınıyor…</Text>
+        ) : chosen.length > 0 ? (
           <Text style={[styles.summary, { color: c.textSecondary }]} numberOfLines={2}>
             {summary} · {radiusKm} km içinde
           </Text>

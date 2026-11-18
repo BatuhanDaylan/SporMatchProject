@@ -20,6 +20,8 @@ type Props = {
   label?: string;
   value: Date;
   minDate?: Date;
+  /** Seçilebilecek en geç gün (ör. antrenman kaydında bugün). */
+  maxDate?: Date;
   onChange: (date: Date) => void;
 };
 
@@ -27,18 +29,21 @@ function fieldLabel(d: Date): string {
   const diff = Math.round((startOfDay(d).getTime() - startOfDay(new Date()).getTime()) / 86400000);
   if (diff === 0) return `Bugün · ${shortDate(d)}`;
   if (diff === 1) return `Yarın · ${shortDate(d)}`;
+  if (diff === -1) return `Dün · ${shortDate(d)}`;
   return shortDate(d);
 }
 
 /** Tam takvim üzerinden tarih seçimi (gün şeridi yerine — ay gezinme + tek dokunuşla seçim). */
-export function CalendarField({ label, value, minDate, onChange }: Props) {
+export function CalendarField({ label, value, minDate, maxDate, onChange }: Props) {
   const c = useColors();
   const [open, setOpen] = useState(false);
   const min = useMemo(() => startOfDay(minDate ?? new Date()), [minDate]);
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(value));
 
   const grid = useMemo(() => calendarGrid(viewMonth), [viewMonth]);
+  const max = useMemo(() => (maxDate ? startOfDay(maxDate) : null), [maxDate]);
   const canGoPrev = startOfMonth(min).getTime() < viewMonth.getTime();
+  const canGoNext = !max || startOfMonth(max).getTime() > viewMonth.getTime();
   const today = new Date();
 
   function openModal() {
@@ -81,8 +86,10 @@ export function CalendarField({ label, value, minDate, onChange }: Props) {
               </Pressable>
               <Text style={[styles.monthLabel, { color: c.text }]}>{monthLabel(viewMonth)}</Text>
               <Pressable
+                disabled={!canGoNext}
                 onPress={() => setViewMonth((m) => addMonths(m, 1))}
                 hitSlop={10}
+                style={{ opacity: canGoNext ? 1 : 0.3 }}
                 accessibilityLabel="Sonraki ay">
                 <Ionicons name="chevron-forward" size={22} color={c.text} />
               </Pressable>
@@ -99,7 +106,7 @@ export function CalendarField({ label, value, minDate, onChange }: Props) {
             <View style={styles.grid}>
               {grid.map((d, i) => {
                 if (!d) return <View key={i} style={styles.cell} />;
-                const disabled = d.getTime() < min.getTime();
+                const disabled = d.getTime() < min.getTime() || (max !== null && d.getTime() > max.getTime());
                 const selected = isSameDay(d, value);
                 const isToday = isSameDay(d, today);
                 return (

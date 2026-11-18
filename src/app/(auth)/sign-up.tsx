@@ -9,7 +9,7 @@ import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/lib/auth';
-import { mapAuthError } from '@/lib/authErrors';
+import { mapAuthError, passwordProblem } from '@/lib/authErrors';
 import { Spacing } from '@/constants/theme';
 
 export default function SignUpScreen() {
@@ -30,8 +30,9 @@ export default function SignUpScreen() {
       return;
     }
     // Güçlü parola: en az 8 karakter, harf ve rakam
-    if (password.length < 8 || !/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) || !/[0-9]/.test(password)) {
-      setError('Parola en az 8 karakter olmalı ve harf ile rakam içermeli.');
+    const pwProblem = passwordProblem(password);
+    if (pwProblem) {
+      setError(pwProblem);
       return;
     }
     if (!accepted) {

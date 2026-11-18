@@ -6,6 +6,8 @@ import { Avatar } from '@/components/ui/avatar';
 import { ImageViewer } from '@/components/ui/image-viewer';
 import { WorkoutHeatmap } from '@/components/workout-heatmap';
 import { TourTarget } from '@/components/tour/tour-target';
+import { ProfileContent } from '@/components/profile-content';
+import { useAuth } from '@/lib/auth';
 import { useColors } from '@/hooks/useColors';
 import type { ProfileStats } from '@/hooks/useProfileStats';
 import { BADGES, type BadgeState } from '@/lib/badges';
@@ -63,6 +65,7 @@ export function ProfileView({
   locked,
 }: Props) {
   const c = useColors();
+  const { user } = useAuth();
   const [viewer, setViewer] = useState<string | null>(null);
   const earnedCount = badges.filter((b) => b.unlocked).length;
 
@@ -210,6 +213,9 @@ export function ProfileView({
       ) : null}
 
       {footer}
+
+      {/* Paylaşımlar en sonda: kendi profilinde düzenle/ayarlar düğmeleri uzun listenin altında kalmasın */}
+      {userId && !locked ? <ProfileContent userId={userId} isMe={userId === user?.id} /> : null}
       <ImageViewer uri={viewer} onClose={() => setViewer(null)} />
     </>
   );

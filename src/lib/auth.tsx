@@ -19,6 +19,12 @@ type AuthContextValue = {
   /** E-postaya gelen 6 haneli kodla kaydı doğrular (doğrulanınca oturum açılır). */
   verifySignup: (email: string, code: string) => Promise<void>;
   resendSignup: (email: string) => Promise<void>;
+  /** "Parolamı unuttum": e-postaya 6 haneli sıfırlama kodu gönderir. */
+  requestPasswordReset: (email: string) => Promise<void>;
+  /** Koddan sonra yeni parolayı kaydeder (doğrulanınca oturum da açılır). */
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
+  /** Oturum açıkken parola değiştirme: önce mevcut parola doğrulanır. */
+  changePassword: (current: string, next: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -85,6 +91,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn: async (email, password) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+      },
+      requestPasswordReset: async (email) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+        if (error) throw error;
+      },
+      resetPassword: async (email, code, newPassword) => {
+        const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'recovery' });
+        if (error) throw error;
+        const { error: uErr } = await supabase.auth.updateUser({ password: newPassword });
+        if (uErr) throw uErr;
+      },
+      changePassword: async (current, next) => {
+        const email = session?.user?.email;
+        if (!email) throw new Error('Oturum bulunamadı.');
+        // Mevcut parolayı doğrula: telefonu açık bırakılan biri parolayı değiştiremesin
+        const { error } = await supabase.auth.signInWithPassword({ email, password: current });
+        if (error) throw new Error('Mevcut parola hatalı.');
+        const { error: uErr } = await supabase.auth.updateUser({ password: next });
+        if (uErr) throw uErr;
       },
       signOut: async () => {
         // Önce bu cihazın push token'ını sök (RLS: hâlâ oturum açıkken silinmeli),

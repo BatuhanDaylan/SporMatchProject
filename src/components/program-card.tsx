@@ -47,11 +47,16 @@ export function ProgramCard({ program, showHit }: { program: DiscoverProgram; sh
         <Text style={{ color: c.textSecondary, fontSize: 12 }}>
           {days.length} gün · {exCount} egzersiz
         </Text>
-        <View style={styles.counts}>
-          <Count icon="heart-outline" value={program.like_count ?? 0} />
-          <Count icon="chatbubble-outline" value={program.comment_count ?? 0} />
-          <Count icon="bookmark-outline" value={program.save_count ?? 0} />
-        </View>
+        {/* Sayılar yalnız biliniyorsa (profil listesinde gelmez; yanlışlıkla 0 göstermeyelim) */}
+        {program.like_count !== undefined ? (
+          <View style={styles.counts}>
+            <Count icon="heart-outline" value={program.like_count ?? 0} />
+            <Count icon="chatbubble-outline" value={program.comment_count ?? 0} />
+            <Count icon="bookmark-outline" value={program.save_count ?? 0} />
+          </View>
+        ) : program.visibility === 'private' ? (
+          <Text style={{ color: c.textSecondary, fontSize: 12 }}>🔒 Gizli</Text>
+        ) : null}
       </View>
     </Card>
   );

@@ -19,6 +19,7 @@ import { getErrorMessage } from '@/lib/errorMessage';
 import { assertClean } from '@/lib/moderation';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/store/alert';
 import { Spacing } from '@/constants/theme';
 import { AVAILABILITY_OPTIONS, GOAL_OPTIONS } from '@/constants/profile-options';
 import { DISTRICTS, PROVINCES } from '@/constants/tr-cities';
@@ -113,7 +114,12 @@ export default function ProfileEditScreen() {
       qc.invalidateQueries({ queryKey: ['profile'] });
       router.back();
     },
-    onError: (e) => setError(getErrorMessage(e)),
+    // Hata metni formun en altında kalıp gözden kaçmasın: ayrıca uyarı penceresinde göster
+    onError: (e) => {
+      const msg = getErrorMessage(e);
+      setError(msg);
+      showAlert('Kaydedilemedi', msg);
+    },
   });
 
   const name = displayName || profile?.username || 'Sporcu';

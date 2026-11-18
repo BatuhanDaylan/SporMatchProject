@@ -6,6 +6,7 @@ import { showAlert } from '@/store/alert';
 
 import { RestTimer } from '@/components/rest-timer';
 import { Button } from '@/components/ui/button';
+import { CalendarField } from '@/components/ui/calendar-field';
 import { Chip } from '@/components/ui/chip';
 import { Loading } from '@/components/ui/loading';
 import { Screen } from '@/components/ui/screen';
@@ -21,11 +22,22 @@ import type { LogEntry } from '@/types/program';
 type ValueMap = Record<string, Record<string, string | boolean>>;
 
 /** Yerel (cihaz saat dilimindeki) bugünün tarihi: YYYY-AA-GG. toISOString UTC verir; Türkiye'de gece 00-03 arası dünü gösterirdi. */
-function today(): string {
-  const d = new Date();
+function ymd(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+const today = () => ymd(new Date());
+/** YYYY-AA-GG → yerel gece yarısı (new Date('2026-11-18') UTC kabul edip bir gün kaydırabilirdi). */
+function parseYmd(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+/** Geriye dönük kayıt en fazla 1 yıl öncesine kadar. */
+const oneYearAgo = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 1);
+  return d;
+};
 
 export default function LogWorkoutScreen() {
   const c = useColors();
@@ -144,7 +156,13 @@ export default function LogWorkoutScreen() {
 
       <RestTimer />
 
-      <TextField label="Tarih" placeholder="YYYY-AA-GG" value={date} onChangeText={setDate} autoCapitalize="none" />
+      <CalendarField
+        label="Tarih"
+        value={parseYmd(date)}
+        minDate={oneYearAgo()}
+        maxDate={new Date()}
+        onChange={(d) => setDate(ymd(d))}
+      />
 
       {days.length > 1 && (
         <>

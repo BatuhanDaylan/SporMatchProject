@@ -22,6 +22,9 @@ import { PROVINCES } from '@/constants/tr-cities';
 import { eventWhen } from '@/lib/datetime';
 import { Spacing } from '@/constants/theme';
 
+/** Etkinlik ekranından çıkıp girince seçilen il unutulmasın (oturum boyunca). */
+let rememberedProvince: string | null = null;
+
 type Mode = 'city' | 'mine';
 
 const SEGMENT_OPTIONS = [
@@ -35,8 +38,12 @@ export default function EventsScreen() {
   const router = useRouter();
   const { data: profile } = useProfile();
   const [mode, setMode] = useState<Mode>('city');
-  // null = profil ili kullanılır; kullanıcı başka bir il seçebilir.
-  const [province, setProvince] = useState<string | null>(null);
+  // null = profil ili kullanılır; kullanıcı başka bir il seçebilir. Seçim uygulama açık kaldıkça hatırlanır.
+  const [province, setProvinceState] = useState<string | null>(() => rememberedProvince);
+  const setProvince = (p: string | null) => {
+    rememberedProvince = p;
+    setProvinceState(p);
+  };
   const shownProvince = province ?? profile?.province ?? null;
 
   const city = useCityEvents(province);

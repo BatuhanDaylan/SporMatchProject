@@ -84,7 +84,10 @@ export default function ProgramDetailScreen() {
       );
       const raw = entry?.values?.[activeMetric.fieldKey];
       const val = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseFloat(raw.replace(',', '.')) : NaN;
-      if (!Number.isNaN(val)) pts.push({ label: log.performed_at.slice(0, 10).split('-').reverse().slice(0, 2).join('.'), value: val }); // 2026-11-16 → 16.11
+      if (!Number.isNaN(val)) {
+        const [y, m, d] = log.performed_at.slice(0, 10).split('-').map(Number);
+        pts.push({ label: `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}`, value: val, t: new Date(y, m - 1, d).getTime() });
+      }
     }
     return pts;
   }, [activeMetric, logs]);
@@ -189,7 +192,15 @@ export default function ProgramDetailScreen() {
         </View>
       </Card>
 
-      {/* Beğeni & kaydetme */}
+      {/* Kendi programın: beğen/kaydet düğmesi yerine yalnız beğeni sayısı (herkese açıksa) */}
+      {isOwner ? (
+        program.visibility === 'public' ? (
+          <Text style={{ color: c.textSecondary, fontSize: 13 }}>
+            ❤️ {social.data?.likeCount ?? 0} kişi beğendi
+          </Text>
+        ) : null
+      ) : (
+      /* Beğeni & kaydetme */
       <View style={styles.socialRow}>
         <Pressable
           onPress={() => social.toggleLike.mutate(social.data?.liked ?? false)}
@@ -226,6 +237,7 @@ export default function ProgramDetailScreen() {
           </Text>
         </Pressable>
       </View>
+      )}
 
       {/* Fork künyesi */}
       {program.forked_from ? (
@@ -344,9 +356,12 @@ export default function ProgramDetailScreen() {
         ))
       )}
 
-      <View style={[styles.section, { borderColor: c.border }]}>
-        <CommentsSection kind="program" targetId={id} canModerate={isOwner} />
-      </View>
+      {/* Gizli programı yalnız sahibi görür; yorum bölümü anlamsız */}
+      {program.visibility === 'public' ? (
+        <View style={[styles.section, { borderColor: c.border }]}>
+          <CommentsSection kind="program" targetId={id} canModerate={isOwner} />
+        </View>
+      ) : null}
 
       <View style={{ height: Spacing.six }} />
     </Screen>

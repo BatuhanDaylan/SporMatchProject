@@ -4,7 +4,8 @@ import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { useColors } from '@/hooks/useColors';
 
-export type ChartPoint = { label: string; value: number };
+/** t: zaman (ms). Verilirse noktalar gerçek tarih aralığına göre yerleşir (3 gün ara, 3 haftadan dar görünür). */
+export type ChartPoint = { label: string; value: number; t?: number };
 
 type Props = {
   points: ChartPoint[];
@@ -36,10 +37,13 @@ export function LineChart({ points, height = 180, unit }: Props) {
     const innerW = width - padL - padR;
     const innerH = height - padT - padB;
     const stepX = points.length > 1 ? innerW / (points.length - 1) : 0;
+    const timed = points.every((p) => p.t !== undefined);
+    const t0 = timed ? points[0].t! : 0;
+    const tSpan = timed ? points[points.length - 1].t! - t0 : 0;
     const yOf = (v: number) => padT + innerH - ((v - lo) / span) * innerH;
 
     const coords = points.map((p, i) => ({
-      x: padL + (points.length > 1 ? i * stepX : innerW / 2),
+      x: padL + (points.length < 2 ? innerW / 2 : timed && tSpan > 0 ? ((p.t! - t0) / tSpan) * innerW : i * stepX),
       y: yOf(p.value),
     }));
     return { min, max, padL, yMin: yOf(min), yMax: yOf(max), coords, polyline: coords.map((c) => `${c.x},${c.y}`).join(' ') };

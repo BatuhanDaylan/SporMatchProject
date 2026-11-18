@@ -79,6 +79,11 @@ export default function SignInScreen() {
         onChangeText={setPassword}
         error={error}
       />
+      <Link
+        href={`/(auth)/forgot${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ''}`}
+        style={[styles.forgot, { color: c.primary }]}>
+        Parolamı unuttum
+      </Link>
 
       <Button title="Giriş Yap" onPress={onSubmit} loading={loading} disabled={googleLoading} />
       {unconfirmed ? (
@@ -112,6 +117,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.two },
   link: { fontWeight: '600' },
+  forgot: { alignSelf: 'flex-end', fontWeight: '600', fontSize: 14, marginTop: -Spacing.one },
   orRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   line: { flex: 1, height: StyleSheet.hairlineWidth },
 });

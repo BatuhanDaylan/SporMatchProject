@@ -307,6 +307,12 @@ export type Database = {
         Update: { token?: string; user_id?: string; platform?: string | null; updated_at?: string };
         Relationships: [];
       };
+      notification_prefs: {
+        Row: { user_id: string; muted: string[]; updated_at: string };
+        Insert: { user_id: string; muted?: string[]; updated_at?: string };
+        Update: { user_id?: string; muted?: string[]; updated_at?: string };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;

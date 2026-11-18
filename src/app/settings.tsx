@@ -34,7 +34,8 @@ const THEME_OPTIONS: { id: ThemeMode; label: string }[] = [
 export default function SettingsScreen() {
   const c = useColors();
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const hasPassword = !!user?.identities?.some((i) => i.provider === 'email');
   const { mode, setMode } = useThemeStore();
   const { deleteAccount } = useModeration();
   const { data: isAdmin } = useIsAdmin();
@@ -111,6 +112,17 @@ export default function SettingsScreen() {
         ))}
       </TourTarget>
 
+      {/* Bildirimler */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>Bildirimler</Text>
+        <NavRow
+          icon="notifications-outline"
+          label="Bildirim ayarları"
+          c={c}
+          onPress={() => router.push('/notification-settings')}
+        />
+      </View>
+
       {/* Güvenlik */}
       <TourTarget id="settings.safety" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: c.text }]}>Gizlilik & Güvenlik</Text>
@@ -181,6 +193,10 @@ export default function SettingsScreen() {
       {/* Hesap */}
       <TourTarget id="settings.account" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: c.text }]}>Hesap</Text>
+        {/* Yalnız e-posta/parola ile kayıtlı hesaplarda (Google ile girenlerin parolası yok) */}
+        {hasPassword ? (
+          <NavRow icon="key-outline" label="Parolayı değiştir" c={c} onPress={() => router.push('/change-password')} />
+        ) : null}
         <NavRow icon="log-out-outline" label="Çıkış yap" c={c} onPress={() => signOut()} />
         <NavRow
           icon="trash-outline"
